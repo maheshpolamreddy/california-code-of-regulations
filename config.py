@@ -35,9 +35,13 @@ CHECKPOINT_DIR = BASE_DIR / os.getenv("CHECKPOINT_DIR", "checkpoints")
 LOGS_DIR = BASE_DIR / os.getenv("LOGS_DIR", "logs")
 
 # Create directories if they don't exist
-DATA_DIR.mkdir(exist_ok=True)
-CHECKPOINT_DIR.mkdir(exist_ok=True)
-LOGS_DIR.mkdir(exist_ok=True)
+# On Vercel (read-only), these might fail, so we ignore errors
+# The app handles missing local files gracefully via Exception handling in modules
+for directory in [DATA_DIR, CHECKPOINT_DIR, LOGS_DIR]:
+    try:
+        directory.mkdir(exist_ok=True)
+    except OSError:
+        pass  # Ignore on read-only filesystems
 
 # File paths
 DISCOVERED_URLS_FILE = DATA_DIR / "discovered_urls.jsonl"

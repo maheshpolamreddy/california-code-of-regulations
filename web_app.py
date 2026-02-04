@@ -166,10 +166,14 @@ if __name__ == '__main__':
         print("\n📱 Open your browser to: http://localhost:5000")
         print("\nPress CTRL+C to stop the server\n")
         
-        app.run(debug=True, host='0.0.0.0', port=5000)
-    else:
-        print("❌ Failed to initialize agent. Check your configuration.")
-        print("\nMake sure:")
-        print("- GEMINI_API_KEY is set in .env")
-        print("- Supabase credentials are correct")
-        print("- Dependencies are installed")
+    if __import__("platform").system() == "Windows":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
+# Vercel / WSGI Entry Point Auto-Init
+# When Vercel imports 'app', we need to ensure agent is initialized
+if __name__ != "__main__":
+    # Silence prints or log them
+    print("Auto-initializing agent for WSGI/Vercel...")
+    init_agent()

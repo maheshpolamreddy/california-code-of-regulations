@@ -44,13 +44,25 @@ def setup_logger(name: str, log_file: str = None, level: int = logging.INFO) -> 
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
     
-    # File handler (if log_file specified)
+    # File handler (if log_file specified) - Wrap in try/except for Vercel read-only FS
     if log_file:
-        log_path = config.LOGS_DIR / log_file
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
-        file_handler.setLevel(level)
-        file_handler.setFormatter(detailed_formatter)
-        logger.addHandler(file_handler)
+        try:
+            log_path = config.LOGS_DIR / log_file
+            # Ensure log directory exists
+            if not config.LOGS_DIR.exists():
+                try:
+                    config.LOGS_DIR.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    # Read-only filesystem (Vercel), skip file logging
+                    return logger
+            
+            file_handler = logging.FileHandler(log_path, encoding='utf-8')
+            file_handler.setLevel(level)
+            file_handler.setFormatter(detailed_formatter)
+            logger.addHandler(file_handler)
+        except (OSError, PermissionError) as e:
+            # Fallback to console only if file access fails
+            print(f"Notice: File logging disabled (Read-only filesystem?): {e}")
     
     return logger
 

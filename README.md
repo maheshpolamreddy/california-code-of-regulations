@@ -25,6 +25,20 @@ This project is an internship assignment demonstrating:
 - 📧 Email: polamreddymahesh623@gmail.com
 - 📱 Mobile: +91 7013441009
 
+## 📸 Screenshots
+
+### Futuristic Holographic Dashboard
+![Dashboard View](screenshots/dashboard.png)
+*Main interface with particle background, glassmorphism effects, and real-time stats*
+
+### Query Interface
+![Query Example](screenshots/query-example.png)
+*Voice-enabled query input with example pills and 3D tilt effects*
+
+### AI-Powered Results
+![Results Display](screenshots/results.png)
+*Typewriter-animated answers with clickable citations and source links*
+
 ---
 
 ## 🚀 Quick Start

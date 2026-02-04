@@ -171,7 +171,6 @@ if __name__ == '__main__':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-# Vercel / WSGI Entry Point Auto-Init
-if __name__ != "__main__":
+else:
+    # Production mode (Render, Gunicorn, etc.)
     init_agent()

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCR Compliance Agent | AI Interface</title>
+    <!-- Fonts: Orbitron for Sci-Fi headers, Inter for readability -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Orbitron:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    <style>
+        :root {
+            --bg-color: #050510;
+            --card-bg: rgba(20, 20, 35, 0.6);
+            --glass-border: rgba(0, 243, 255, 0.2);
+            --primary: #00f3ff;
+            /* Neon Cyan */
+            --secondary: #bc13fe;
+            /* Electric Purple */
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --accent-glow: 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Particles Container */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: radial-gradient(circle at center, #0a0a20 0%, #000000 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Holographic Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            background: linear-gradient(to right, #fff, #00f3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            box-shadow: var(--accent-glow);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
+            }
+
+            100% {
+                box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            }
+        }
+
+        /* 3D Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+            /* 3D tilt is handled by vanilla-tilt.js */
+            transform-style: preserve-3d;
+            transform: perspective(1000px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-shadow: 0 0 15px var(--primary);
+            display: block;
+            margin-bottom: 0.5rem;
+            transform: translateZ(20px);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transform: translateZ(10px);
+        }
+
+        /* Cyber Input Area */
+        .query-section {
+            background: linear-gradient(135deg, rgba(20, 20, 35, 0.8), rgba(10, 10, 20, 0.9));
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            box-shadow: 0 0 40px rgba(188, 19, 254, 0.15);
+            margin-bottom: 3rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #333;
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Jarvis Voice Button */
+        #voice-btn {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #voice-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        #voice-btn.listening {
+            background: #ff0055;
+            border-color: #ff0055;
+            color: white;
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(255, 0, 85, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 85, 0);
+            }
+        }
+
+        button.ask-btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 0 3rem;
+            height: 60px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.ask-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+            transform: rotate(30deg);
+            transition: transform 0.5s;
+            transform-origin: top left;
+            opacity: 0;
+        }
+
+        button.ask-btn:hover::after {
+            opacity: 1;
+            transform: rotate(30deg) translate(100%, 100%);
+            transition: transform 0.8s;
+        }
+
+        button.ask-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(188, 19, 254, 0.4);
+        }
+
+        /* Results Area */
+        #result-area {
+            display: none;
+        }
+
+        .answer-card {
+            background: rgba(20, 20, 35, 0.8);
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            backdrop-filter: blur(15px);
+        }
+
+        .answer-card::before {
+            content: "AI ANALYSIS";
+            position: absolute;
+            top: -12px;
+            left: 2rem;
+            background: var(--bg-color);
+            padding: 0 1rem;
+            color: var(--primary);
+            font-family: 'Orbitron';
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+        }
+
+        .answer-text {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            color: #d0d0e0;
+        }
+
+        .answer-text strong {
+            color: var(--primary);
+        }
+
+        /* Typing cursor effect */
+        .typing-cursor::after {
+            content: '▋';
+            color: var(--primary);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .citations-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .citation-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--secondary);
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .citation-card:hover {
+            background: rgba(188, 19, 254, 0.1);
+            transform: translateX(10px);
+            box-shadow: -5px 0 20px rgba(188, 19, 254, 0.2);
+        }
+
+        .citation-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-family: 'Orbitron';
+            color: var(--secondary);
+        }
+
+        .similarity-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .example-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .pill {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #aaa;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .pill:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(0, 243, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* Loader */
+        .loader-container {
+            display: none;
+            justify-content: center;
+            margin: 3rem 0;
+        }
+
+        .scanner {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+            max-width: 400px;
+        }
+
+        .scanner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scan 1.5s infinite ease-in-out;
+        }
+
+        @keyframes scan {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(350%);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            #voice-btn {
+                width: 100%;
+                border-radius: 12px;
+            }
+
+            button.ask-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <div class="container">
+        <header class="animate__animated animate__fadeInDown">
+            <div class="status-badge" id="agent-status">
+                <i class="fas fa-circle"></i> SYSTEM ONLINE
+            </div>
+            <h1>CCR INTELLIGENCE</h1>
+            <p style="color: var(--text-muted); letter-spacing: 2px;">CALIFORNIA CODE OF REGULATIONS • NEURAL INTERFACE
+            </p>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid animate__animated animate__fadeInUp">
+            <div class="stat-card" data-tilt data-tilt-max="10" data-tilt-glare data-tilt-max-glare="0.5">
+                <span class="stat-number count-up" id="stat-sections">0</span>
+                <span class="stat-label">Indexed Protocols</span>
+            </div>
+            <div class="stat-card" data-tilt>
+                <span class="stat-number" id="stat-model">---</span>
+                <span class="stat-label">Neural Engine</span>
+            </div>
+            <div class="stat-card" data-tilt>
+                <span class="stat-number" id="stat-dims">768</span>
+                <span class="stat-label">Vector Dimensions</span>
+            </div>
+        </div>
+
+        <!-- Query Section -->
+        <div class="query-section animate__animated animate__zoomIn">
+            <div class="input-wrapper">
+                <input type="text" id="query-input" placeholder="Initialize query parameter or use voice command...">
+                <button id="voice-btn" title="Activate Voice Command"><i class="fas fa-microphone"></i></button>
+            </div>
+            <button class="ask-btn" onclick="submitQuery()">Execute Analysis</button>
+
+            <div class="example-pills">
+                <!-- Title 8: Cal/OSHA -->
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-hard-hat"></i> Heat Illness Prevention
+                    (Title 8)</div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-first-aid"></i> Workplace First Aid
+                    Requirements</div>
+
+                <!-- Title 24: Building Code -->
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-building"></i> ADA Bathroom Requirements
+                    (Title 24)</div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-solar-panel"></i> Solar Panel Installation
+                    Standards</div>
+
+                <!-- Business & Taxes -->
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-briefcase"></i> Employee Overtime Rules
+                </div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-file-invoice-dollar"></i> Sales Tax Permit
+                    Requirements</div>
+
+                <!-- Specialized -->
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-utensils"></i> Restaurant Food Safety Codes
+                </div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-cannabis"></i> Cannabis Cultivation Licenses
+                </div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-hospital"></i> Medi-Cal Provider Enrollment
+                </div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-car"></i> DMV Vehicle Registration (Title
+                    13)</div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-water"></i> Drought Water Restrictions</div>
+                <div class="pill" onclick="useQuery(this)"><i class="fas fa-child"></i> Daycare Licensing Standards
+                </div>
+            </div>
+        </div>
+
+        <!-- Loader -->
+        <div class="loader-container" id="loader">
+            <div style="text-align: center; width: 100%;">
+                <p style="color: var(--primary); margin-bottom: 1rem; letter-spacing: 2px;">PROCESSING DATA STREAMS...
+                </p>
+                <div class="scanner" style="margin: 0 auto;"></div>
+            </div>
+        </div>
+
+        <!-- Error Panel -->
+        <div id="error-panel" class="animate__animated animate__shakeX"
+            style="display: none; background: rgba(255,0,0,0.1); border: 1px solid red; padding: 1rem; border-radius: 12px; text-align: center; margin-bottom: 2rem;">
+            <p id="error-msg" style="color: #ff5555;"></p>
+        </div>
+
+        <!-- Results -->
+        <div id="result-area">
+            <div class="answer-card animate__animated animate__fadeInUp">
+                <div class="answer-text" id="ai-answer"></div>
+            </div>
+
+            <h3 style="font-family: 'Orbitron'; margin-bottom: 1.5rem; color: var(--text-muted);">SOURCE PROTOCOLS</h3>
+            <div class="citations-grid" id="citations-list">
+                <!-- Citations go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Vanilla Tilt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+    <!-- Marked for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // --- 1. Particles Config ---
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#00f3ff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#bc13fe", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 2 }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" } },
+                "modes": { "repulse": { "distance": 100, "duration": 0.4 } }
+            }
+        });
+
+        // --- 2. Stats & Auto-Update ---
+        async function updateStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+
+                // Animate Numbers
+                animateValue("stat-sections", parseInt(document.getElementById("stat-sections").innerText), data.sections_indexed, 1000);
+
+                document.getElementById('stat-model').innerText = data.agent_model.replace("gemini-", "").replace("gpt-", "");
+                document.getElementById('stat-dims').innerText = data.embedding_dimension;
+
+                const badge = document.getElementById('agent-status');
+                if (data.status === 'online') {
+                    badge.innerHTML = '<i class="fas fa-circle" style="color: var(--primary);"></i> SYSTEM ONLINE';
+                    badge.style.borderColor = "var(--primary)";
+                }
+            } catch (e) { console.error("Stats sync failed", e); }
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            const obj = document.getElementById(id);
+            const timer = setInterval(function () {
+                current += increment;
+                obj.innerHTML = current;
+                if (current == end) clearInterval(timer);
+            }, Math.max(stepTime, 10)); // Min 10ms
+        }
+
+        setInterval(updateStats, 5000); // 5s refresh
+        updateStats();
+
+        // --- 3. Interaction Logic ---
+        function useQuery(el) {
+            document.getElementById('query-input').value = el.innerText;
+            window.scrollTo({ top: document.querySelector('.query-section').offsetTop, behavior: 'smooth' });
+        }
+
+        async function submitQuery() {
+            const query = document.getElementById('query-input').value.trim();
+            if (!query) return;
+
+            // Interface States
+            document.getElementById('result-area').style.display = 'none';
+            document.getElementById('error-panel').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await res.json();
+                document.getElementById('loader').style.display = 'none';
+
+                if (data.success || data.citations) { // Handle graceful fallback
+                    document.getElementById('result-area').style.display = 'block';
+
+                    // Display Citations
+                    const citationsHtml = data.citations.map(c => `
+                        <div class="citation-card" onclick="window.open('${c.url}', '_blank')">
+                            <div class="citation-header">
+                                <span><i class="fas fa-book"></i> ${c.citation}</span>
+                                <span class="similarity-badge">${(c.similarity * 100).toFixed(0)}% MATCH</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #ccc;">
+                                ${c.heading || 'Regulation details unavailable'}
+                            </div>
+                        </div>
+                    `).join('');
+                    document.getElementById('citations-list').innerHTML = citationsHtml;
+
+                    // Typewriter Effect for Answer
+                    const answerContainer = document.getElementById('ai-answer');
+                    answerContainer.innerHTML = ''; // Clear previous
+                    answerContainer.classList.add('typing-cursor');
+
+                    // Clean markdown for typing (simple render first, then stream?)
+                    // Streaming HTML is hard, so we'll stream plain text then render markdown at end?
+                    // Better: Just stream the markdown text, then render final.
+
+                    const text = data.answer || "Processing complete. Displaying retrieved citations.";
+                    let i = 0;
+                    const speed = 15; // ms per char
+
+                    function typeWriter() {
+                        if (i < text.length) {
+                            // Simple text append for effect, rendering markdown on each step is heavy
+                            // so we type plain text then MARKDOWN render at end?
+                            // No, let's just show text. 
+                            // Actually, let's do a "Quick Stream":
+                            answerContainer.innerHTML = marked.parse(text); // Instant render for now for usability
+                            // Adding typewriter to already rendered HTML is complex. 
+                            // Let's just remove the cursor class after delay.
+                            document.getElementById('ai-answer').classList.remove('typing-cursor');
+                        }
+                    }
+                    // For "User Shock" value, let's try a simple text reveal
+                    // Actually, instant render is better for UX, just adding classes.
+                    answerContainer.innerHTML = marked.parse(text);
+
+                } else {
+                    throw new Error(data.error || "Unknown system error");
+                }
+
+            } catch (e) {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('error-panel').style.display = 'block';
+                document.getElementById('error-msg').innerText = "SYSTEM FAILURE: " + e.message;
+            }
+        }
+
+        // Enter key to submit
+        document.getElementById('query-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') submitQuery();
+        });
+
+        // --- 4. Voice Input (Web Speech API) ---
+        const voiceBtn = document.getElementById('voice-btn');
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+
+            voiceBtn.addEventListener('click', () => {
+                recognition.start();
+                voiceBtn.classList.add('listening');
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('query-input').value = transcript;
+                voiceBtn.classList.remove('listening');
+                submitQuery(); // Auto submit
+            };
+
+            recognition.onerror = () => {
+                voiceBtn.classList.remove('listening');
+            };
+
+            recognition.onend = () => {
+                voiceBtn.classList.remove('listening');
+            };
+        } else {
+            voiceBtn.style.display = 'none'; // Hide if not supported
+        }
+
+    </script>
+</body>
+
+</html>

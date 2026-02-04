@@ -156,10 +156,10 @@ Please provide a comprehensive answer with specific citations and explanations."
 
 Please provide a comprehensive answer with specific citations and explanations."""
                 
-                # Add retry logic for rate limits (429)
+                # Add retry logic for rate limits (429) - faster retries for production
                 @retry(
-                    stop=stop_after_attempt(5),
-                    wait=wait_exponential(multiplier=2, min=4, max=60),
+                    stop=stop_after_attempt(3),  # Reduced from 5 to 3 attempts
+                    wait=wait_exponential(multiplier=1, min=2, max=10),  # Faster retries
                     reraise=True
                 )
                 def generate_with_retry():

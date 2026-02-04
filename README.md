@@ -19,6 +19,12 @@ This project is an internship assignment demonstrating:
 4. **Vector Database** - Semantic search with Supabase + pgvector
 5. **AI Agent** - GPT-4 powered compliance advisor with citations
 
+### 👨‍💻 Author
+
+**Mahesh Polamreddy**
+- 📧 Email: polamreddymahesh623@gmail.com
+- 📱 Mobile: +91 7013441009
+
 ---
 
 ## 🚀 Quick Start
@@ -490,9 +496,14 @@ python cli.py --query "restaurant health code requirements"
 
 ## 🤝 Support & Contact
 
-For questions or clarifications:
-- **Email:** aravind.karanam@gmail.com
-- **WhatsApp:** 8688743302
+**Project Developer:**
+- **Mahesh Polamreddy**
+- 📧 Email: polamreddymahesh623@gmail.com
+- 📱 Mobile: +91 7013441009
+
+**Assignment Coordinator:**
+- Email: aravind.karanam@gmail.com
+- WhatsApp: 8688743302
 
 ---
 

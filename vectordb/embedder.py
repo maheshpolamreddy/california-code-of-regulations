@@ -5,6 +5,8 @@ Handles chunking of long sections.
 """
 
 from typing import List, Dict
+import tiktoken
+from openai import OpenAI
 import config
 from logger import vectordb_logger
 
@@ -17,11 +19,11 @@ class TextEmbedder:
     def __init__(self):
         # Prefer Gemini if available, fallback to OpenAI
         if config.GEMINI_API_KEY:
-            # Use lightweight REST client instead of heavy SDK
-            from agent.gemini_rest_client import GeminiRESTClient
-            self.client = GeminiRESTClient(api_key=config.GEMINI_API_KEY)
+            import google.generativeai as genai
+            genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
-            vectordb_logger.info("Using Gemini REST Client for embeddings")
+            self.client = genai
+            vectordb_logger.info("Using Google Gemini for embeddings")
         elif config.OPENAI_API_KEY:
             from openai import OpenAI
             self.client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -30,25 +32,14 @@ class TextEmbedder:
         else:
             raise ValueError("Neither GEMINI_API_KEY nor OPENAI_API_KEY found in environment")
         
-        
-        # Try to load tiktoken, but don't fail if missing (Vercel optimization)
-        # We only need tiktoken for chunking (indexing), not for querying (inference)
-        try:
-            import tiktoken
-            self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
-        except ImportError:
-            self.encoding = None
-            vectordb_logger.warning("tiktoken not found. Chunking will not be available (fine for inference).")
-            
+        self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
         self.model = config.EMBEDDING_MODEL
         self.max_tokens = config.CHUNK_SIZE
         self.overlap_tokens = config.CHUNK_OVERLAP
         
     def count_tokens(self, text: str) -> int:
         """Count tokens in text using tiktoken."""
-        if self.encoding:
-            return len(self.encoding.encode(text))
-        return len(text.split())  # Rough fallback
+        return len(self.encoding.encode(text))
     
     def chunk_text(self, text: str, metadata: dict = None) -> List[Dict[str, any]]:
         """
@@ -62,10 +53,6 @@ class TextEmbedder:
         Returns:
             List of dicts with 'text' and 'metadata' keys
         """
-        """
-        if not self.encoding:
-             raise ImportError("tiktoken is not installed. Cannot chunk text.")
-             
         tokens = self.encoding.encode(text)
         chunks = []
         
@@ -122,12 +109,13 @@ class TextEmbedder:
         """
         try:
             if self.client_type == "gemini":
-                # Use Gemini REST Client
-                embedding = self.client.embed_content(
-                    model_name=self.model,
-                    text=text,
-                    task_type=task_type
+                # Use Gemini embedding with task type
+                result = self.client.embed_content(
+                    model=self.model,
+                    content=text,
+                    task_type=task_type  # "retrieval_document" or "retrieval_query"
                 )
+                embedding = result['embedding']
             else:
                 # Use OpenAI embedding (no task type needed)
                 response = self.client.embeddings.create(
@@ -155,15 +143,15 @@ class TextEmbedder:
         """
         try:
             if self.client_type == "gemini":
-                # Gemini embeds one at a time via REST
+                # Gemini embeds one at a time (no batch API yet)
                 embeddings = []
                 for text in texts:
-                    embedding = self.client.embed_content(
-                        model_name=self.model,
-                        text=text,
+                    result = self.client.embed_content(
+                        model=self.model,
+                        content=text,
                         task_type="retrieval_document"
                     )
-                    embeddings.append(embedding)
+                    embeddings.append(result['embedding'])
             else:
                 # Use OpenAI batch embedding
                 response = self.client.embeddings.create(

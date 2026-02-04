@@ -6,6 +6,7 @@ Flask application for running the agent in a browser with enhanced features
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import sys
+import asyncio
 from pathlib import Path
 from functools import lru_cache
 from datetime import datetime, timedelta
@@ -172,8 +173,5 @@ if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
 # Vercel / WSGI Entry Point Auto-Init
-# When Vercel imports 'app', we need to ensure agent is initialized
 if __name__ != "__main__":
-    # Silence prints or log them
-    print("Auto-initializing agent for WSGI/Vercel...")
     init_agent()

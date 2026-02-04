@@ -1,28 +1,27 @@
 # Core Dependencies
-# crawl4ai>=0.3.0  <-- Uncomment for local crawling. Removed for Vercel (too huge).
+crawl4ai>=0.3.0
 supabase>=2.0.0
 openai>=1.0.0
-# google-generativeai>=0.3.0 <-- Removed (Heavy gRPC dependency). Replaced with lightweight REST calls.
+google-generativeai>=0.3.0
 python-dotenv>=1.0.0
 
 # Data Processing
 markdownify>=0.11.0
 pydantic>=2.0.0
 beautifulsoup4>=4.12.0
-# lxml>=4.9.0  <-- Removed to save space (BS4 defaults to python parser if missing)
+lxml>=4.9.0
 
 # Utilities
-requests>=2.0.0
 tenacity>=8.2.0
-# rich>=13.0.0 <-- Removed (CLI only)
-# tqdm>=4.66.0 <-- Removed (CLI only)
+rich>=13.0.0
+tqdm>=4.66.0
 aiohttp>=3.9.0
-# numpy>=1.24.0  <-- Removed for Vercel (Replaced with pure python math)
-# tiktoken>=0.5.0 <-- Removed for Vercel (Indexing only)
+numpy>=1.24.0
+tiktoken>=0.5.0
 
 # Testing
-# pytest>=7.4.0        <-- Removed for prod
-# pytest-asyncio>=0.21.0 <-- Removed for prod
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
 
 # Web Server
 Flask>=2.0.0

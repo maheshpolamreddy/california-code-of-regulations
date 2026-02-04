@@ -23,11 +23,11 @@ class ComplianceAdvisor:
     def __init__(self):
         # Determine client type based on configured AGENT_MODEL
         if "gemini" in config.AGENT_MODEL and config.GEMINI_API_KEY:
-            # Use lightweight REST client instead of heavy SDK
-            from agent.gemini_rest_client import GeminiRESTClient
-            self.client = GeminiRESTClient(api_key=config.GEMINI_API_KEY)
+            import google.generativeai as genai
+            genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
-            agent_logger.info("Using Gemini REST Client for agent")
+            self.genai = genai
+            agent_logger.info("Using Google Gemini for agent")
         elif config.OPENAI_API_KEY:
             from openai import OpenAI
             self.client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -146,7 +146,15 @@ Please provide a comprehensive answer with specific citations and explanations."
         try:
             if self.client_type == "gemini":
                 # Use Gemini (use configured model)
-                # Client is now GeminiRESTClient
+                model = self.genai.GenerativeModel(config.AGENT_MODEL)
+                prompt = f"""{self.build_system_prompt()}
+
+**Query:** {query}
+
+**Retrieved CCR Sections:**
+{context}
+
+Please provide a comprehensive answer with specific citations and explanations."""
                 
                 # Add retry logic for rate limits (429)
                 @retry(
@@ -155,13 +163,10 @@ Please provide a comprehensive answer with specific citations and explanations."
                     reraise=True
                 )
                 def generate_with_retry():
-                    return self.client.generate_content(
-                        model_name=config.AGENT_MODEL,
-                        prompt=prompt,
-                        system_instruction=self.build_system_prompt()
-                    )
+                    return model.generate_content(prompt)
 
-                answer = generate_with_retry()
+                response = generate_with_retry()
+                answer = response.text
             else:
                 # Use OpenAI
                 messages = [

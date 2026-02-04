@@ -1,0 +1,12 @@
+# Exclude data and heavy logs from Vercel function bundle
+data/
+logs/
+checkpoints/
+*.jsonl
+*.json
+tests/
+examples/
+.git/
+.env
+__pycache__/
+*.pyc

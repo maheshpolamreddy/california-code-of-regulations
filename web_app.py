@@ -52,7 +52,18 @@ def get_stats():
             return jsonify(stats_cache['data'])
     
     try:
-        section_count = vectordb.count_sections() if vectordb else 0
+        # Safety check: ensure vectordb is initialized
+        if not vectordb:
+            return jsonify({
+                'error': 'Database not initialized',
+                'status': 'offline',
+                'sections_indexed': 0,
+                'embedding_model': config.EMBEDDING_MODEL,
+                'agent_model': config.AGENT_MODEL,
+                'embedding_dimension': config.EMBEDDING_DIMENSION
+            }), 503
+            
+        section_count = vectordb.count_sections()
         stats_data = {
             'sections_indexed': section_count,
             'embedding_model': config.EMBEDDING_MODEL,

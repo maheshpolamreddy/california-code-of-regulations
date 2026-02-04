@@ -595,6 +595,10 @@
         async function updateStats() {
             try {
                 const res = await fetch('/api/stats');
+                if (!res.ok) {
+                    console.error('Stats API returned:', res.status);
+                    return;
+                }
                 const data = await res.json();
 
                 // Animate Numbers
@@ -608,7 +612,10 @@
                     badge.innerHTML = '<i class="fas fa-circle" style="color: var(--primary);"></i> SYSTEM ONLINE';
                     badge.style.borderColor = "var(--primary)";
                 }
-            } catch (e) { console.error("Stats sync failed", e); }
+            } catch (e) {
+                console.error("Stats sync failed", e);
+                // Don't show error to user for stats - it's background data
+            }
         }
 
         function animateValue(id, start, end, duration) {

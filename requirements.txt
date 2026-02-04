@@ -2,7 +2,7 @@
 # crawl4ai>=0.3.0  <-- Uncomment for local crawling. Removed for Vercel (too huge).
 supabase>=2.0.0
 openai>=1.0.0
-google-generativeai>=0.3.0
+# google-generativeai>=0.3.0 <-- Removed (Heavy gRPC dependency). Replaced with lightweight REST calls.
 python-dotenv>=1.0.0
 
 # Data Processing
@@ -12,6 +12,7 @@ beautifulsoup4>=4.12.0
 # lxml>=4.9.0  <-- Removed to save space (BS4 defaults to python parser if missing)
 
 # Utilities
+requests>=2.0.0
 tenacity>=8.2.0
 # rich>=13.0.0 <-- Removed (CLI only)
 # tqdm>=4.66.0 <-- Removed (CLI only)

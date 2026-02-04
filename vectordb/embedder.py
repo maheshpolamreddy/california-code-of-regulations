@@ -17,11 +17,11 @@ class TextEmbedder:
     def __init__(self):
         # Prefer Gemini if available, fallback to OpenAI
         if config.GEMINI_API_KEY:
-            import google.generativeai as genai
-            genai.configure(api_key=config.GEMINI_API_KEY)
+            # Use lightweight REST client instead of heavy SDK
+            from agent.gemini_rest_client import GeminiRESTClient
+            self.client = GeminiRESTClient(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
-            self.client = genai
-            vectordb_logger.info("Using Google Gemini for embeddings")
+            vectordb_logger.info("Using Gemini REST Client for embeddings")
         elif config.OPENAI_API_KEY:
             from openai import OpenAI
             self.client = OpenAI(api_key=config.OPENAI_API_KEY)
@@ -122,13 +122,12 @@ class TextEmbedder:
         """
         try:
             if self.client_type == "gemini":
-                # Use Gemini embedding with task type
-                result = self.client.embed_content(
-                    model=self.model,
-                    content=text,
-                    task_type=task_type  # "retrieval_document" or "retrieval_query"
+                # Use Gemini REST Client
+                embedding = self.client.embed_content(
+                    model_name=self.model,
+                    text=text,
+                    task_type=task_type
                 )
-                embedding = result['embedding']
             else:
                 # Use OpenAI embedding (no task type needed)
                 response = self.client.embeddings.create(
@@ -156,15 +155,15 @@ class TextEmbedder:
         """
         try:
             if self.client_type == "gemini":
-                # Gemini embeds one at a time (no batch API yet)
+                # Gemini embeds one at a time via REST
                 embeddings = []
                 for text in texts:
-                    result = self.client.embed_content(
-                        model=self.model,
-                        content=text,
+                    embedding = self.client.embed_content(
+                        model_name=self.model,
+                        text=text,
                         task_type="retrieval_document"
                     )
-                    embeddings.append(result['embedding'])
+                    embeddings.append(embedding)
             else:
                 # Use OpenAI batch embedding
                 response = self.client.embeddings.create(

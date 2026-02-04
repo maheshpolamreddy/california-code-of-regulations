@@ -5,8 +5,6 @@ Handles chunking of long sections.
 """
 
 from typing import List, Dict
-import tiktoken
-from openai import OpenAI
 import config
 from logger import vectordb_logger
 
@@ -32,14 +30,25 @@ class TextEmbedder:
         else:
             raise ValueError("Neither GEMINI_API_KEY nor OPENAI_API_KEY found in environment")
         
-        self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+        
+        # Try to load tiktoken, but don't fail if missing (Vercel optimization)
+        # We only need tiktoken for chunking (indexing), not for querying (inference)
+        try:
+            import tiktoken
+            self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+        except ImportError:
+            self.encoding = None
+            vectordb_logger.warning("tiktoken not found. Chunking will not be available (fine for inference).")
+            
         self.model = config.EMBEDDING_MODEL
         self.max_tokens = config.CHUNK_SIZE
         self.overlap_tokens = config.CHUNK_OVERLAP
         
     def count_tokens(self, text: str) -> int:
         """Count tokens in text using tiktoken."""
-        return len(self.encoding.encode(text))
+        if self.encoding:
+            return len(self.encoding.encode(text))
+        return len(text.split())  # Rough fallback
     
     def chunk_text(self, text: str, metadata: dict = None) -> List[Dict[str, any]]:
         """
@@ -53,6 +62,10 @@ class TextEmbedder:
         Returns:
             List of dicts with 'text' and 'metadata' keys
         """
+        """
+        if not self.encoding:
+             raise ImportError("tiktoken is not installed. Cannot chunk text.")
+             
         tokens = self.encoding.encode(text)
         chunks = []
         

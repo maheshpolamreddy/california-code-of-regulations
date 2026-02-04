@@ -163,25 +163,32 @@ class SupabaseVectorDB:
         except Exception as rpc_err:
             vectordb_logger.debug(f"RPC search not available, using Python fallback: {rpc_err}")
 
-        # Fallback: fetch candidates and rank in Python
+        # Fallback: fetch candidates and rank in Python (Pure Python version to avoid numpy dependency)
         try:
             query = self.client.table(self.table_name).select("*")
             if title_number is not None:
                 query = query.eq("title_number", title_number)
             result = query.limit(1000).execute()
-            import numpy as np
-            query_vec = np.array(query_embedding)
+            
+            import math
+            
+            def cosine_similarity(v1, v2):
+                dot_product = sum(a * b for a, b in zip(v1, v2))
+                norm_v1 = math.sqrt(sum(a * a for a in v1))
+                norm_v2 = math.sqrt(sum(b * b for b in v2))
+                return dot_product / (norm_v1 * norm_v2) if norm_v1 > 0 and norm_v2 > 0 else 0.0
+
             results_with_scores = []
             for row in result.data or []:
                 if row.get("embedding"):
-                    row_vec = np.array(row["embedding"])
-                    similarity = float(
-                        np.dot(query_vec, row_vec)
-                        / (np.linalg.norm(query_vec) * np.linalg.norm(row_vec))
-                    )
+                    # embedding is already a list of floats from JSON
+                    row_vec = row["embedding"]
+                    similarity = cosine_similarity(query_embedding, row_vec)
+                    
                     if similarity >= min_similarity:
                         row["similarity"] = similarity
                         results_with_scores.append(row)
+                        
             results_with_scores.sort(key=lambda x: x["similarity"], reverse=True)
             top_results = results_with_scores[:limit]
             vectordb_logger.info(f"Python search: {len(top_results)} similar sections")

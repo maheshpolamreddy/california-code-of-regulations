@@ -1,5 +1,7 @@
 # CCR Compliance Agent
 
+🌐 **Live Demo:** [https://california-code-of-regulations.onrender.com](https://california-code-of-regulations.onrender.com)
+
 A complete system for crawling the California Code of Regulations (CCR), indexing it into a vector database, and providing AI-powered compliance advice to facility operators.
 
 ## 🎯 Project Overview

@@ -64,3 +64,8 @@ MAX_RETRIEVAL_RESULTS = 10
 
 # Supabase Table Name
 SUPABASE_TABLE_NAME = "ccr_sections"
+
+# Gemini API Retry Configuration
+GEMINI_RETRY_ATTEMPTS = int(os.getenv("GEMINI_RETRY_ATTEMPTS", "5"))
+GEMINI_RETRY_MIN_WAIT = int(os.getenv("GEMINI_RETRY_MIN_WAIT", "2"))
+GEMINI_RETRY_MAX_WAIT = int(os.getenv("GEMINI_RETRY_MAX_WAIT", "60"))

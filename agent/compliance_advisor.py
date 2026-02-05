@@ -156,14 +156,19 @@ Please provide a comprehensive answer with specific citations and explanations."
 
 Please provide a comprehensive answer with specific citations and explanations."""
                 
-                # Add retry logic for rate limits (429) - faster retries for production
+                # Add retry logic for rate limits with configurable parameters
                 @retry(
-                    stop=stop_after_attempt(3),  # Reduced from 5 to 3 attempts
-                    wait=wait_exponential(multiplier=1, min=2, max=10),  # Faster retries
+                    stop=stop_after_attempt(config.GEMINI_RETRY_ATTEMPTS),
+                    wait=wait_exponential(multiplier=1, min=config.GEMINI_RETRY_MIN_WAIT, max=config.GEMINI_RETRY_MAX_WAIT),
                     reraise=True
                 )
                 def generate_with_retry():
-                    return model.generate_content(prompt)
+                    try:
+                        return model.generate_content(prompt)
+                    except Exception as e:
+                        # Log retry attempts for debugging
+                        agent_logger.warning(f"Gemini API call failed, will retry: {str(e)}")
+                        raise
 
                 response = generate_with_retry()
                 answer = response.text
@@ -232,7 +237,7 @@ Please provide a comprehensive answer with specific citations and explanations."
             return result
             
         except Exception as e:
-            agent_logger.error(f"Failed to generate answer: {e}")
+            agent_logger.error(f"Failed to generate answer after retries: {e}")
             
             # Fallback: Process citations even if LLM failed
             citations = []
@@ -247,11 +252,19 @@ Please provide a comprehensive answer with specific citations and explanations."
                     'similarity': section.get('similarity')
                 })
             
-            # Friendly error message for rate limits
-            if "429" in str(e) or "quota" in str(e).lower():
-                fallback_answer = "⚠️ **AI Rate Limit Reached**\n\nI couldn't generate a summary right now because of high traffic (Google Gemini Quote Exceeded). \n\n**However, I found these relevant regulations for you:**"
+            # Provide user-friendly error messages with helpful guidance
+            if "429" in str(e) or "quota" in str(e).lower() or "resource" in str(e).lower():
+                fallback_answer = """**I found relevant CCR sections for your query.**
+
+I'm experiencing high demand right now and couldn't generate a detailed summary, but I've retrieved the most relevant regulations below. You can review the citations and source links to find the information you need.
+
+**Relevant Regulations:**"""
             else:
-                fallback_answer = f"I encountered an error generating the summary: {str(e)}\n\n**Here are the relevant regulations found:**"
+                fallback_answer = f"""**I found relevant CCR sections for your query.**
+
+I encountered a technical issue while generating the summary, but I've retrieved the most relevant regulations below.
+
+**Relevant Regulations:**"""
 
             return {
                 'answer': fallback_answer,

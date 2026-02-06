@@ -50,15 +50,14 @@ FAILED_URLS_FILE = DATA_DIR / "failed_urls.jsonl"
 COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 
 # Embedding Configuration
-# Use Gemini if API key is available, otherwise fall back to OpenAI
-EMBEDDING_MODEL = "models/gemini-embedding-001" if GEMINI_API_KEY else "text-embedding-3-small"
-EMBEDDING_DIMENSION = 3072 if GEMINI_API_KEY else 1536
+# Use OpenAI due to pgvector 2000-dimension limit (Gemini produces 3072 dims)
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSION = 1536
 CHUNK_SIZE = 512  # tokens
 CHUNK_OVERLAP = 50  # tokens
 
 # Agent Configuration
-# Use Gemini if API key is available, otherwise fall back to OpenAI
-print(f"Loading config: EMBEDDING_MODEL={EMBEDDING_MODEL}")
+# Keep using Gemini for chat/responses (no dimension limits for text generation)
 AGENT_MODEL = "gemini-2.0-flash" if GEMINI_API_KEY else "gpt-4o-mini"
 AGENT_TEMPERATURE = 0.1
 MAX_RETRIEVAL_RESULTS = 10

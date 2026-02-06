@@ -63,6 +63,27 @@ class CCRRetriever:
             min_similarity=0.5  # Minimum relevance threshold
         )
         
+        # Flatten metadata fields for consistent access
+        # (Fixes issue where schema uses 'metadata' jsonb column)
+        for section in results:
+            meta = section.get('metadata', {})
+            if meta and isinstance(meta, dict):
+                # Ensure citation and hierarchy are available at top level
+                if 'citation' not in section and 'citation' in meta:
+                    section['citation'] = meta['citation']
+                if 'title_number' not in section and 'title_number' in meta:
+                    section['title_number'] = meta['title_number']
+                if 'section_heading' not in section and 'section_heading' in meta:
+                    section['section_heading'] = meta['section_heading']
+                if 'breadcrumb_path' not in section and 'breadcrumb_path' in meta:
+                    section['breadcrumb_path'] = meta['breadcrumb_path']
+                    
+            # Normalize URL field (some schemas use 'url', others 'section_url')
+            if 'url' in section and 'section_url' not in section:
+                section['section_url'] = section['url']
+            elif 'section_url' in section and 'url' not in section:
+                section['url'] = section['section_url']
+        
         # Re-rank and filter
         ranked_results = self.rerank_results(results, query, facility_type)
         

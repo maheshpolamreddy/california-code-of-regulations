@@ -81,23 +81,30 @@ class IndexPipeline:
         """
         Convert CCRSection to database record format.
         """
-        return {
-            'section_url': section.source_url,
+        # Pack extra fields into metadata
+        metadata = {
             'title_number': section.title_number,
             'title_name': section.title_name,
             'division': section.division,
             'chapter': section.chapter,
             'subchapter': section.subchapter,
             'article': section.article,
-            'section_number': section.section_number,
             'section_heading': section.section_heading,
             'citation': section.citation,
             'breadcrumb_path': section.breadcrumb_path,
-            'content_markdown': section.content_markdown,
-            'embedding': embedding,
             'chunk_index': chunk_index,
             'total_chunks': total_chunks,
             'retrieved_at': section.retrieved_at.isoformat()
+        }
+
+        # Return dict matching SQL schema: url, section_no, title, content, metadata, embedding
+        return {
+            'url': section.source_url,
+            'section_no': section.section_number,
+            'title': section.section_heading,   # Map heading to title column
+            'content': section.content_markdown, # Map content to content column
+            'metadata': metadata,
+            'embedding': embedding
         }
     
     def index_sections(self, sections: List[CCRSection]):
@@ -140,8 +147,10 @@ class IndexPipeline:
                                 chunk_index=idx,
                                 total_chunks=len(chunks)
                             )
-                            # Modify URL to make it unique per chunk
-                            record['section_url'] = f"{section.source_url}#chunk{idx}"
+                            # Modify URL and Metadata for chunks
+                            record['url'] = f"{section.source_url}#chunk{idx}"
+                            record['metadata']['chunk_index'] = idx
+                            record['metadata']['total_chunks'] = len(chunks)
                             batch_records.append(record)
                     else:
                         # No chunking needed
@@ -151,6 +160,8 @@ class IndexPipeline:
                     
                 except Exception as e:
                     vectordb_logger.error(f"Failed to process section {section.citation}: {e}")
+                    with open("LATEST_ERROR.txt", "w") as f:
+                        f.write(str(e))
                     failed_count += 1
             
             # Batch upsert to Supabase

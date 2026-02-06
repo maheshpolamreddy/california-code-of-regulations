@@ -1,0 +1,31 @@
+🔍 Query: What are the requirements for ADA bathrooms?
+--------------------------------------------------
+📥 Retrieving matched sections...
+
+✅ Found 5 relevant citations:
+   1. CCR § 64449.1
+      Source: https://govt.westlaw.com/calregs/Document/I79D944485B6111EC9451000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)
+      Score: 0.6180
+   2. CCR § 1394
+      Source: https://govt.westlaw.com/calregs/Document/I482537934C8611ECB533000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)
+      Score: 0.6143
+   3. CCR § 547.54
+      Source: https://govt.westlaw.com/calregs/Document/I0CDBFFC35A0A11EC8227000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)
+      Score: 0.6122
+   4. CCR § 547.55
+      Source: https://govt.westlaw.com/calregs/Document/I0CF21FD35A0A11EC8227000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)
+      Score: 0.6103
+   5. CCR § 7335
+      Source: https://govt.westlaw.com/calregs/Document/I5996A7E34C6B11EC93A8000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)
+      Score: 0.6096
+
+🤖 Generating Answer...
+
+📝 Final Answer:
+--------------------------------------------------
+**I found relevant CCR sections for your query.**
+
+I'm experiencing high demand right now and couldn't generate a detailed summary, but I've retrieved the most relevant regulations below. You can review the citations and source links to find the information you need.
+
+**Relevant Regulations:**
+--------------------------------------------------

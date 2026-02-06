@@ -112,7 +112,7 @@ class SupabaseVectorDB:
         try:
             result = self.client.table(self.table_name).upsert(
                 sections_data,
-                on_conflict='section_url'
+                on_conflict='url'
             ).execute()
             
             count = len(sections_data)
@@ -121,6 +121,8 @@ class SupabaseVectorDB:
             
         except Exception as e:
             vectordb_logger.error(f"Failed to batch upsert: {e}")
+            with open("LATEST_ERROR.txt", "w") as f:
+                f.write(str(e))
             return 0
     
     def search_similar(
@@ -145,13 +147,14 @@ class SupabaseVectorDB:
         """
         try:
             # Prefer native pgvector RPC (run supabase_schema.sql to create search_ccr_sections)
+            # Prefer native pgvector RPC (run supabase_schema.sql to create match_ccr_sections)
+            # Function signature: match_ccr_sections(query_embedding, match_threshold, match_count)
             result = self.client.rpc(
-                "search_ccr_sections",
+                "match_ccr_sections",
                 {
                     "query_embedding": query_embedding,
                     "match_count": limit,
-                    "match_threshold": min_similarity,
-                    "filter_title_number": title_number,
+                    "match_threshold": min_similarity
                 },
             ).execute()
             if result.data is not None:

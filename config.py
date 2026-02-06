@@ -58,6 +58,7 @@ CHUNK_OVERLAP = 50  # tokens
 
 # Agent Configuration
 # Use Gemini if API key is available, otherwise fall back to OpenAI
+print(f"Loading config: EMBEDDING_MODEL={EMBEDDING_MODEL}")
 AGENT_MODEL = "gemini-2.0-flash" if GEMINI_API_KEY else "gpt-4o-mini"
 AGENT_TEMPERATURE = 0.1
 MAX_RETRIEVAL_RESULTS = 10

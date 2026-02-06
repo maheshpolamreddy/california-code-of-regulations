@@ -1,6 +1,6 @@
 # CCR Compliance Agent - Coverage Report
 
-**Generated:** 2026-02-06 08:13:50 UTC
+**Generated:** 2026-02-06 09:11:10 UTC
 
 ## Summary Statistics
 

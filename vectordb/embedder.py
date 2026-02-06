@@ -19,29 +19,39 @@ class TextEmbedder:
     def __init__(self):
         # Check EMBEDDING_MODEL to determine which client to use
         if "sentence-transformers" in config.EMBEDDING_MODEL.lower():
-            from sentence_transformers import SentenceTransformer
+            # LAZY LOADING: Don't load model at init to save memory on startup
             # Extract model name from config (e.g., "sentence-transformers/all-MiniLM-L6-v2" -> "all-MiniLM-L6-v2")
-            model_name = config.EMBEDDING_MODEL.split("/")[-1] if "/" in config.EMBEDDING_MODEL else config.EMBEDDING_MODEL
+            self.model_name = config.EMBEDDING_MODEL.split("/")[-1] if "/" in config.EMBEDDING_MODEL else config.EMBEDDING_MODEL
             self.client_type = "sentence-transformers"
-            self.client = SentenceTransformer(model_name)
-            vectordb_logger.info(f"Using Sentence-Transformers for embeddings: {model_name}")
+            self.client = None  # Will be loaded on first use
+            vectordb_logger.info(f"Configured Sentence-Transformers for embeddings: {self.model_name} (lazy loading)")
         elif "gemini" in config.EMBEDDING_MODEL.lower():
             import google.generativeai as genai
             genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
             self.client = genai
+            self.model_name = None
             vectordb_logger.info("Using Google Gemini for embeddings")
         else:
             # Use OpenAI
             from openai import OpenAI
             self.client = OpenAI(api_key=config.OPENAI_API_KEY)
             self.client_type = "openai"
+            self.model_name = None
             vectordb_logger.info("Using OpenAI for embeddings")
         
         # Use simple splitting for sentence-transformers (doesn't need strict token counting)
         self.model = config.EMBEDDING_MODEL
         self.max_tokens = config.CHUNK_SIZE
         self.overlap_tokens = config.CHUNK_OVERLAP
+    
+    def _ensure_model_loaded(self):
+        """Lazy-load sentence-transformers model on first use (saves startup memory)"""
+        if self.client_type == "sentence-transformers" and self.client is None:
+            from sentence_transformers import SentenceTransformer
+            vectordb_logger.info(f"Loading Sentence-Transformers model: {self.model_name}...")
+            self.client = SentenceTransformer(self.model_name)
+            vectordb_logger.info("✅ Model loaded successfully!")
         
     def count_tokens(self, text: str) -> int:
         """Count tokens in text. For sentence-transformers, use word count approximation."""
@@ -163,6 +173,8 @@ class TextEmbedder:
         """
         try:
             if self.client_type == "sentence-transformers":
+                # Lazy-load model on first use
+                self._ensure_model_loaded()
                 # Use sentence-transformers (local, no API)
                 embedding = self.client.encode(text, convert_to_numpy=True).tolist()
             elif self.client_type == "gemini":

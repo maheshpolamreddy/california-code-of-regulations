@@ -52,7 +52,7 @@ COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 # Embedding Configuration
 # Use Gemini if API key is available, otherwise fall back to OpenAI
 EMBEDDING_MODEL = "models/gemini-embedding-001" if GEMINI_API_KEY else "text-embedding-3-small"
-EMBEDDING_DIMENSION = 768 if GEMINI_API_KEY else 1536
+EMBEDDING_DIMENSION = 3072 if GEMINI_API_KEY else 1536
 CHUNK_SIZE = 512  # tokens
 CHUNK_OVERLAP = 50  # tokens
 

@@ -50,9 +50,24 @@ FAILED_URLS_FILE = DATA_DIR / "failed_urls.jsonl"
 COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 
 # Embedding Configuration
-# Using sentence-transformers for free local embeddings (no API costs)
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # 384 dimensions
-EMBEDDING_DIMENSION = 384
+# HYBRID APPROACH: sentence-transformers (local) vs OpenAI (deployment)
+# Detects environment and chooses optimal embedding model
+
+import os
+
+# Check if running on Render (production deployment)
+IS_PRODUCTION = os.getenv("RENDER") or os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("VERCEL")
+
+if IS_PRODUCTION:
+    # Production: Use OpenAI for reliability and smaller memory footprint
+    EMBEDDING_MODEL = "text-embedding-3-small"
+    EMBEDDING_DIMENSION = 1536
+    print("🌐 PRODUCTION MODE: Using OpenAI embeddings")
+else:
+    # Local development: Use sentence-transformers (free)
+    EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION = 384
+    print("💻 DEVELOPMENT MODE: Using sentence-transformers (free)")
 CHUNK_SIZE = 512  # tokens
 CHUNK_OVERLAP = 50  # tokens
 

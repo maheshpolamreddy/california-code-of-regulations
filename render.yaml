@@ -14,7 +14,5 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
-      - key: RENDER
-        value: "true"
       - key: PYTHON_VERSION
         value: "3.11.0"

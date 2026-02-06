@@ -141,11 +141,19 @@ def query_agent():
             'success': False,
             'error': 'Database connection error. Please try again.'
         }), 503
-    except Exception as e:
-        print(f"Query error: {e}")
+    except MemoryError as e:
         return jsonify({
             'success': False,
-            'error': f'An error occurred: {str(e)}'
+            'error': 'Server out of memory. Please upgrade to a paid Render plan or use OpenAI embeddings.'
+        }), 507
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Query error: {e}")
+        print(f"Traceback:\n{error_trace}")
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}. Check logs for details.'
         }), 500
 
 @app.route('/api/health')

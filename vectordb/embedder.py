@@ -17,20 +17,19 @@ class TextEmbedder:
     """
     
     def __init__(self):
-        # Prefer Gemini if available, fallback to OpenAI
-        if config.GEMINI_API_KEY:
+        # Check EMBEDDING_MODEL to determine which client to use
+        if "gemini" in config.EMBEDDING_MODEL.lower():
             import google.generativeai as genai
             genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
             self.client = genai
             vectordb_logger.info("Using Google Gemini for embeddings")
-        elif config.OPENAI_API_KEY:
+        else:
+            # Use OpenAI
             from openai import OpenAI
             self.client = OpenAI(api_key=config.OPENAI_API_KEY)
             self.client_type = "openai"
             vectordb_logger.info("Using OpenAI for embeddings")
-        else:
-            raise ValueError("Neither GEMINI_API_KEY nor OPENAI_API_KEY found in environment")
         
         self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
         self.model = config.EMBEDDING_MODEL

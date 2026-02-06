@@ -50,12 +50,12 @@ FAILED_URLS_FILE = DATA_DIR / "failed_urls.jsonl"
 COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 
 # Embedding Configuration
-# Using sentence-transformers for free local embeddings (no API costs)
-# Works for both local development AND deployment
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # 384 dimensions
-EMBEDDING_DIMENSION = 384
-CHUNK_SIZE = 512  # tokens
-CHUNK_OVERLAP = 50  # tokens
+# Using Gemini Embeddings (API-based) to save RAM on Render Free Tier
+# sentence-transformers (local) causes OOM crashes (512MB limit)
+EMBEDDING_MODEL = "models/embedding-001"  # 768 dimensions
+EMBEDDING_DIMENSION = 768
+CHUNK_SIZE = 1000  # Gemini supports larger context
+CHUNK_OVERLAP = 100
 
 # Agent Configuration
 # Keep using Gemini for chat/responses (no dimension limits for text generation)

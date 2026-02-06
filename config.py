@@ -51,11 +51,12 @@ COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 
 # Embedding Configuration
 # Using Gemini Embeddings (API-based) to save RAM on Render Free Tier
-# sentence-transformers (local) causes OOM crashes (512MB limit)
-EMBEDDING_MODEL = "models/gemini-embedding-001"  # 768 dimensions
-EMBEDDING_DIMENSION = 768
-CHUNK_SIZE = 1000  # Gemini supports larger context
-CHUNK_OVERLAP = 100
+# Embedding Configuration
+# Using FastEmbed (ONNX) - Free, Local, Low Memory, No API Quotas
+EMBEDDING_MODEL = "fastembed/BAAI/bge-small-en-v1.5"
+EMBEDDING_DIMENSION = 384
+CHUNK_SIZE = 512
+CHUNK_OVERLAP = 50
 
 # Agent Configuration
 # Keep using Gemini for chat/responses (no dimension limits for text generation)

@@ -160,6 +160,10 @@ class IndexPipeline:
                 
                 if success_count < len(batch_records):
                     failed_count += len(batch_records) - success_count
+            
+            # Rate limiting for Gemini API (free tier)
+            # import time
+            # time.sleep(1.0)
         
         print(f"\nIndexing complete!")
         print(f"   Successfully indexed: {indexed_count}")

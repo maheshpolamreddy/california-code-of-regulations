@@ -25,13 +25,22 @@ class TextEmbedder:
             self.client_type = "sentence-transformers"
             self.client = None  # Will be loaded on first use
             vectordb_logger.info(f"Configured Sentence-Transformers for embeddings: {self.model_name} (lazy loading)")
-        elif "gemini" in config.EMBEDDING_MODEL.lower():
+        elif "gemini" in config.EMBEDDING_MODEL.lower() or "models/" in config.EMBEDDING_MODEL.lower():
             import google.generativeai as genai
             genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
             self.client = genai
             self.model_name = None
-            vectordb_logger.info("Using Google Gemini for embeddings")
+            vectordb_logger.info(f"Using Google Gemini for embeddings ({config.EMBEDDING_MODEL})")
+        elif "fastembed" in config.EMBEDDING_MODEL.lower():
+            # FastEmbed (ONNX) - Local, Lightweight, Free
+            from fastembed import TextEmbedding
+            # Extract model name (e.g., "fastembed/BAAI/bge-small-en-v1.5" -> "BAAI/bge-small-en-v1.5")
+            model_name = config.EMBEDDING_MODEL.replace("fastembed/", "")
+            self.client_type = "fastembed"
+            self.client = TextEmbedding(model_name=model_name)
+            self.model_name = model_name
+            vectordb_logger.info(f"Using FastEmbed (ONNX) for embeddings: {model_name}")
         else:
             # Use OpenAI
             from openai import OpenAI
@@ -177,6 +186,10 @@ class TextEmbedder:
                 self._ensure_model_loaded()
                 # Use sentence-transformers (local, no API)
                 embedding = self.client.encode(text, convert_to_numpy=True).tolist()
+            elif self.client_type == "fastembed":
+                # FastEmbed returns a generator of embeddings
+                embeddings = list(self.client.embed([text]))
+                embedding = embeddings[0].tolist()
             elif self.client_type == "gemini":
                 # Use Gemini embedding with task type
                 result = self.client.embed_content(

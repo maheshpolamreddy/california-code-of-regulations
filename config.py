@@ -50,9 +50,9 @@ FAILED_URLS_FILE = DATA_DIR / "failed_urls.jsonl"
 COVERAGE_REPORT_FILE = DATA_DIR / "coverage_report.md"
 
 # Embedding Configuration
-# Use OpenAI due to pgvector 2000-dimension limit (Gemini produces 3072 dims)
-EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSION = 1536
+# Using sentence-transformers for free local embeddings (no API costs)
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # 384 dimensions
+EMBEDDING_DIMENSION = 384
 CHUNK_SIZE = 512  # tokens
 CHUNK_OVERLAP = 50  # tokens
 

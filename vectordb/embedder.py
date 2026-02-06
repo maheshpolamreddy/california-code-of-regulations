@@ -18,7 +18,14 @@ class TextEmbedder:
     
     def __init__(self):
         # Check EMBEDDING_MODEL to determine which client to use
-        if "gemini" in config.EMBEDDING_MODEL.lower():
+        if "sentence-transformers" in config.EMBEDDING_MODEL.lower():
+            from sentence_transformers import SentenceTransformer
+            # Extract model name from config (e.g., "sentence-transformers/all-MiniLM-L6-v2" -> "all-MiniLM-L6-v2")
+            model_name = config.EMBEDDING_MODEL.split("/")[-1] if "/" in config.EMBEDDING_MODEL else config.EMBEDDING_MODEL
+            self.client_type = "sentence-transformers"
+            self.client = SentenceTransformer(model_name)
+            vectordb_logger.info(f"Using Sentence-Transformers for embeddings: {model_name}")
+        elif "gemini" in config.EMBEDDING_MODEL.lower():
             import google.generativeai as genai
             genai.configure(api_key=config.GEMINI_API_KEY)
             self.client_type = "gemini"
@@ -31,14 +38,21 @@ class TextEmbedder:
             self.client_type = "openai"
             vectordb_logger.info("Using OpenAI for embeddings")
         
-        self.encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+        # Use simple splitting for sentence-transformers (doesn't need strict token counting)
         self.model = config.EMBEDDING_MODEL
         self.max_tokens = config.CHUNK_SIZE
         self.overlap_tokens = config.CHUNK_OVERLAP
         
     def count_tokens(self, text: str) -> int:
-        """Count tokens in text using tiktoken."""
-        return len(self.encoding.encode(text))
+        """Count tokens in text. For sentence-transformers, use word count approximation."""
+        if self.client_type == "sentence-transformers":
+            # Approximate: 1 token ≈ 0.75 words
+            return int(len(text.split()) * 1.33)
+        else:
+            # Use tiktoken for OpenAI/Gemini
+            import tiktoken
+            encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+            return len(encoding.encode(text))
     
     def chunk_text(self, text: str, metadata: dict = None) -> List[Dict[str, any]]:
         """
@@ -52,48 +66,89 @@ class TextEmbedder:
         Returns:
             List of dicts with 'text' and 'metadata' keys
         """
-        tokens = self.encoding.encode(text)
-        chunks = []
-        
-        if len(tokens) <= self.max_tokens:
-            # No chunking needed
-            return [{
-                'text': text,
-                'metadata': metadata or {},
-                'chunk_index': 0,
-                'total_chunks': 1
-            }]
-        
-        # Split into overlapping chunks
-        start = 0
-        chunk_index = 0
-        
-        while start < len(tokens):
-            end = start + self.max_tokens
-            chunk_tokens = tokens[start:end]
-            chunk_text = self.encoding.decode(chunk_tokens)
+        if self.client_type == "sentence-transformers":
+            # Simple word-based chunking for sentence-transformers
+            words = text.split()
+            if len(words) <= self.max_tokens:
+                return [{
+                    'text': text,
+                    'metadata': metadata or {},
+                    'chunk_index': 0,
+                    'total_chunks': 1
+                }]
             
-            chunk_metadata = (metadata or {}).copy()
-            chunk_metadata['chunk_index'] = chunk_index
-            chunk_metadata['is_chunked'] = True
+            chunks = []
+            start = 0
+            chunk_index = 0
             
-            chunks.append({
-                'text': chunk_text,
-                'metadata': chunk_metadata,
-                'chunk_index': chunk_index,
-                'total_chunks': 0  # Will update after loop
-            })
+            while start < len(words):
+                end = start + self.max_tokens
+                chunk_words = words[start:end]
+                chunk_text = ' '.join(chunk_words)
+                
+                chunk_metadata = (metadata or {}).copy()
+                chunk_metadata['chunk_index'] = chunk_index
+                chunk_metadata['is_chunked'] = True
+                
+                chunks.append({
+                    'text': chunk_text,
+                    'metadata': chunk_metadata,
+                    'chunk_index': chunk_index,
+                    'total_chunks': 0
+                })
+                
+                start += self.max_tokens - self.overlap_tokens
+                chunk_index += 1
             
-            start += self.max_tokens - self.overlap_tokens
-            chunk_index += 1
-        
-        # Update total_chunks for all chunks
-        for chunk in chunks:
-            chunk['total_chunks'] = len(chunks)
-            chunk['metadata']['total_chunks'] = len(chunks)
-        
-        vectordb_logger.info(f"Split text into {len(chunks)} chunks")
-        return chunks
+            for chunk in chunks:
+                chunk['total_chunks'] = len(chunks)
+                chunk['metadata']['total_chunks'] = len(chunks)
+            
+            vectordb_logger.info(f"Split text into {len(chunks)} chunks")
+            return chunks
+        else:
+            # Token-based chunking for OpenAI/Gemini
+            import tiktoken
+            encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+            tokens = encoding.encode(text)
+            chunks = []
+            
+            if len(tokens) <= self.max_tokens:
+                return [{
+                    'text': text,
+                    'metadata': metadata or {},
+                    'chunk_index': 0,
+                    'total_chunks': 1
+                }]
+            
+            start = 0
+            chunk_index = 0
+            
+            while start < len(tokens):
+                end = start + self.max_tokens
+                chunk_tokens = tokens[start:end]
+                chunk_text = encoding.decode(chunk_tokens)
+                
+                chunk_metadata = (metadata or {}).copy()
+                chunk_metadata['chunk_index'] = chunk_index
+                chunk_metadata['is_chunked'] = True
+                
+                chunks.append({
+                    'text': chunk_text,
+                    'metadata': chunk_metadata,
+                    'chunk_index': chunk_index,
+                    'total_chunks': 0
+                })
+                
+                start += self.max_tokens - self.overlap_tokens
+                chunk_index += 1
+            
+            for chunk in chunks:
+                chunk['total_chunks'] = len(chunks)
+                chunk['metadata']['total_chunks'] = len(chunks)
+            
+            vectordb_logger.info(f"Split text into {len(chunks)} chunks")
+            return chunks
     
     def embed_text(self, text: str, task_type: str = "retrieval_document") -> List[float]:
         """
@@ -104,10 +159,13 @@ class TextEmbedder:
             task_type: Type of embedding task - "retrieval_document" for indexing, "retrieval_query" for search
             
         Returns:
-            Embedding vector (768 dimensions for Gemini, 1536 for OpenAI)
+            Embedding vector (384 dims for sentence-transformers, 768 for Gemini, 1536 for OpenAI)
         """
         try:
-            if self.client_type == "gemini":
+            if self.client_type == "sentence-transformers":
+                # Use sentence-transformers (local, no API)
+                embedding = self.client.encode(text, convert_to_numpy=True).tolist()
+            elif self.client_type == "gemini":
                 # Use Gemini embedding with task type
                 result = self.client.embed_content(
                     model=self.model,

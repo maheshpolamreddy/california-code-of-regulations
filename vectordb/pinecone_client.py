@@ -27,7 +27,8 @@ class PineconeVectorDB:
         try:
             existing_indexes = [idx.name for idx in self.client.list_indexes()]
             if self.index_name not in existing_indexes:
-                vectordb_logger.warning(f"Pinecone index '{self.index_name}' does not exist. Call setup_schema() to create it.")
+                vectordb_logger.info(f"Pinecone index '{self.index_name}' does not exist. Auto-creating...")
+                self.setup_schema()
         except Exception as e:
             vectordb_logger.debug(f"Pinecone ping failed during init: {e}")
             # Raise exception so connection fallback logic handles it

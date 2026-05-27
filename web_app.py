@@ -35,6 +35,10 @@ def init_agent():
         vectordb = PineconeVectorDB()
         # Verify connectivity
         vectordb.client.list_indexes()
+        # If database is connected but index is completely empty, 
+        # fall back to local offline RAG to make the app immediately functional.
+        if vectordb.count_sections() == 0:
+            raise ConnectionError("Pinecone index is empty")
         return True
     except Exception as e:
         print(f"Error initializing real agent (likely offline): {e}")

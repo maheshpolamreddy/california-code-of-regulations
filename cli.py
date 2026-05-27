@@ -152,6 +152,10 @@ Examples:
         console.print("[dim]Checking database connection...[/dim]")
         db = PineconeVectorDB()
         db.client.list_indexes()
+        # If database is connected but index is completely empty, 
+        # fall back to local offline RAG to make the app immediately functional.
+        if db.count_sections() == 0:
+            raise ConnectionError("Pinecone index is empty")
         advisor = ComplianceAdvisor()
         console.print("[bold green][OK] Connected to Pinecone (Real Advisor)[/bold green]\n")
     except Exception as e:

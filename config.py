@@ -15,8 +15,8 @@ except ImportError:
 # API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "ccr-sections")
 
 # Crawling Configuration
 MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "3"))  # Avoid hammering site
@@ -64,8 +64,8 @@ AGENT_MODEL = "gemini-2.0-flash" if GEMINI_API_KEY else "gpt-4o-mini"
 AGENT_TEMPERATURE = 0.1
 MAX_RETRIEVAL_RESULTS = 10
 
-# Supabase Table Name
-SUPABASE_TABLE_NAME = "ccr_sections"
+# Pinecone Index Config
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "ccr-sections")
 
 # Gemini API Retry Configuration
 GEMINI_RETRY_ATTEMPTS = int(os.getenv("GEMINI_RETRY_ATTEMPTS", "5"))

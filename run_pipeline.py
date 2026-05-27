@@ -108,7 +108,7 @@ def main():
     run_coverage()
 
     if args.index:
-        print("\n[4/4] Indexing (Supabase)...")
+        print("\n[4/4] Indexing (Pinecone)...")
         run_index()
 
     print("\nPipeline complete. See data/coverage_report.md for coverage.")

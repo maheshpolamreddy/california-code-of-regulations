@@ -1,6 +1,7 @@
 # Core Dependencies
 crawl4ai>=0.3.0
 supabase>=2.0.0
+pinecone
 openai>=1.0.0
 google-generativeai>=0.3.0
 python-dotenv>=1.0.0

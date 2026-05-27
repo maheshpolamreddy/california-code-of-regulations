@@ -1,1 +1,1 @@
-"""Vector database package for Supabase integration."""
+"""Vector database package for Pinecone integration."""

@@ -1,28 +1,15 @@
-from vectordb.supabase_client import SupabaseVectorDB
-
-db = SupabaseVectorDB()
-print("Probing Columns...")
+from vectordb.pinecone_client import PineconeVectorDB
+import config
 
 try:
-    print("Attempt 1: Select *")
-    res = db.client.table("ccr_sections").select("*").limit(1).execute()
-    if res.data:
-        print(f"Success! Keys: {list(res.data[0].keys())}")
+    db = PineconeVectorDB()
+    print("Probing Pinecone Metadata columns/keys...")
+    zero_vec = [0.0] * config.EMBEDDING_DIMENSION
+    res = db.search_similar(zero_vec, limit=1, min_similarity=-1.0)
+    if res:
+        print(f"Success! Keys returned by mapper: {list(res[0].keys())}")
+        print(f"Raw metadata keys in Pinecone: {list(res[0]['metadata'].keys())}")
     else:
-        print("Success! But table is empty.")
+        print("Success! But Pinecone index search returned no records.")
 except Exception as e:
-    print(f"Failed *: {e}")
-
-try:
-    print("\nAttempt 2: Select section_url")
-    res = db.client.table("ccr_sections").select("section_url").limit(1).execute()
-    print("Success section_url!")
-except Exception as e:
-    print(f"Failed section_url: {e}")
-
-try:
-    print("\nAttempt 3: Select url")
-    res = db.client.table("ccr_sections").select("url").limit(1).execute()
-    print("Success url!")
-except Exception as e:
-    print(f"Failed url: {e}")
+    print(f"Failed probing Pinecone: {e}")

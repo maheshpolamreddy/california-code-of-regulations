@@ -1,21 +1,24 @@
-from vectordb.supabase_client import SupabaseVectorDB
-import json
-
-db = SupabaseVectorDB()
-print("Verifying schema...")
-
-test_record = {
-    "section_url": "test_verification_url",
-    "embedding": [0.1] * 384,  # 384 dimensions
-    "citation": "Test Citation",
-    "content_markdown": "Test content"
-}
+from vectordb.pinecone_client import PineconeVectorDB
+import config
 
 try:
-    print("Attempting to insert 384-dim vector...")
+    db = PineconeVectorDB()
+    print("Verifying Pinecone schema...")
+    
+    test_record = {
+        "section_url": "test_verification_url",
+        "embedding": [0.1] * config.EMBEDDING_DIMENSION,
+        "citation": "Test Citation",
+        "content_markdown": "Test content"
+    }
+    
+    print(f"Attempting to insert test vector ({config.EMBEDDING_DIMENSION} dims) into Pinecone...")
     db.upsert_section(test_record)
-    print("✅ SUCCESS: Schema accepts 384 dimensions.")
+    print("✅ SUCCESS: Upserted test vector into Pinecone.")
+    
     # Clean up
-    db.client.table("ccr_sections").delete().eq("section_url", "test_verification_url").execute()
+    print("Cleaning up verification record...")
+    db.index.delete(ids=["test_verification_url"])
+    print("✅ SUCCESS: Verification record deleted.")
 except Exception as e:
     print(f"❌ FAILURE: {e}")

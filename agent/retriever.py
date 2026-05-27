@@ -9,7 +9,7 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
 from vectordb.embedder import TextEmbedder
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 import config
 from logger import agent_logger
 
@@ -21,7 +21,7 @@ class CCRRetriever:
     
     def __init__(self):
         self.embedder = TextEmbedder()
-        self.vectordb = SupabaseVectorDB()
+        self.vectordb = PineconeVectorDB()
         
     def retrieve(
         self,

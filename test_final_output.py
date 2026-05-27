@@ -1,10 +1,10 @@
 from agent.compliance_advisor import ComplianceAdvisor
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 import json
 
 # Initialize
 advisor = ComplianceAdvisor()
-db = SupabaseVectorDB()
+db = PineconeVectorDB()
 
 query = "What are the requirements for ADA bathrooms?"
 # buffer output to file

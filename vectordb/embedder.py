@@ -234,6 +234,12 @@ class TextEmbedder:
                         task_type="retrieval_document"
                     )
                     embeddings.append(result['embedding'])
+            elif self.client_type == "fastembed":
+                # FastEmbed returns a generator of embeddings
+                embeddings = [emb.tolist() for emb in self.client.embed(texts)]
+            elif self.client_type == "sentence-transformers":
+                self._ensure_model_loaded()
+                embeddings = self.client.encode(texts, convert_to_numpy=True).tolist()
             else:
                 # Use OpenAI batch embedding
                 response = self.client.embeddings.create(

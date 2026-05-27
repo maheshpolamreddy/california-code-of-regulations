@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).parent))
 import requests
 from bs4 import BeautifulSoup
 from vectordb.embedder import TextEmbedder
-from vectordb.supabase_client import SupabaseClient
+from vectordb.pinecone_client import PineconeVectorDB
 import config
 from logger import extraction_logger
 
@@ -66,14 +66,14 @@ def main():
     print("Step 2: Generating embeddings...")
     embedder = TextEmbedder()
     for section in sections:
-        section['embedding'] = embedder.generate_embedding(section['content'])
+        section['embedding'] = embedder.embed_text(section['content'])
         print(f"  ✓ Embedded: {section['title'][:50]}...")
     
     print(f"\n✅ Generated {len(sections)} embeddings\n")
     
-    # Step 3: Index to Supabase
-    print("Step 3: Indexing to Supabase...")
-    client = SupabaseClient()
+    # Step 3: Index to Pinecone
+    print("Step 3: Indexing to Pinecone...")
+    client = PineconeVectorDB()
     
     success_count = 0
     for section in sections:
@@ -91,7 +91,7 @@ def main():
         except Exception as e:
             print(f"  ❌ Failed: {e}")
     
-    print(f"\n✅ Indexed {success_count}/{len(sections)} sections to Supabase\n")
+    print(f"\n✅ Indexed {success_count}/{len(sections)} sections to Pinecone\n")
     
     # Step 4: Test search
     print("Step 4: Testing semantic search...")

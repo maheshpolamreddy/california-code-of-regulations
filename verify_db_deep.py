@@ -1,37 +1,28 @@
-from vectordb.supabase_client import SupabaseVectorDB
-import json
+from vectordb.pinecone_client import PineconeVectorDB
+import config
 
-db = SupabaseVectorDB()
-print("Verifying DB Content...")
-
-# 1. Count
-print(f"Count: {db.count_sections()}")
-
-# 2. Raw Select
-print("\nFetching 1 record...")
 try:
-    res = db.client.table("ccr_sections").select("section_url,embedding").limit(1).execute()
-    if res.data:
-        print(f"Record found: {res.data[0]['section_url']}")
-        emb = res.data[0]['embedding']
-        if emb:
-             print(f"Embedding length: {len(emb)}")
-             print(f"First 5 values: {emb[:5]}")
-        else:
-             print("Embedding is NULL/Empty!")
+    db = PineconeVectorDB()
+    print("Verifying Pinecone DB Content (Deep Check)...")
+
+    # 1. Count & Index Stats
+    print("\n--- Index Stats ---")
+    stats = db.index.describe_index_stats()
+    print(f"Stats raw response: {stats}")
+    print(f"Total Vector Count: {stats.get('total_vector_count', 0)}")
+
+    # 2. Fetch a sample record by list query or dummy search
+    print("\n--- Fetch Sample Record ---")
+    zero_vec = [0.0] * config.EMBEDDING_DIMENSION
+    results = db.search_similar(zero_vec, limit=1, min_similarity=-1.0)
+    if results:
+        sample = results[0]
+        print(f"Record ID: {sample.get('id')}")
+        print(f"Citation: {sample.get('citation')}")
+        print(f"Title: {sample.get('title')}")
+        print(f"Content preview: {sample.get('content_markdown', '')[:100]}...")
     else:
-        print("No records found in table!")
+        print("No records retrieved from index search.")
 
-# 3. Raw RPC Search with -1.0 threshold
-print("\nTesting RPC with low threshold...")
-try:
-    # zeros vector
-    vec = [0.0] * 384
-    res = db.client.rpc("match_ccr_sections", {
-        "query_embedding": vec,
-        "match_threshold": -1.0,
-        "match_count": 5
-    }).execute()
-    print(f"RPC found: {len(res.data) if res.data else 0} items")
 except Exception as e:
-    print(f"RPC Failed: {e}")
+    print(f"❌ Deep Verification Failed: {e}")

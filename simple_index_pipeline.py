@@ -1,5 +1,5 @@
 """
-Simple indexing pipeline - indexes extracted sections to Supabase
+Simple indexing pipeline - indexes extracted sections to Pinecone
 """
 
 import sys
@@ -8,12 +8,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from vectordb.embedder import TextEmbedder
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 import config
 from logger import vectordb_logger
 
 def main():
-    """Index extracted sections to Supabase."""
+    """Index extracted sections to Pinecone."""
     print("\n🚀 Starting Indexing Pipeline\n")
     
     # Load extracted sections
@@ -26,9 +26,9 @@ def main():
     print(f"✓ Loaded {len(sections)} sections\n")
     
     # Initialize embedder and client
-    print("Initializing embedder and Supabase client...")
+    print("Initializing embedder and Pinecone client...")
     embedder = TextEmbedder()
-    client = SupabaseVectorDB()
+    client = PineconeVectorDB()
     print("✓ Ready\n")
     
     # Process each section
@@ -40,10 +40,10 @@ def main():
             print(f"[{i}/{len(sections)}] {section['section_heading'][:50]}...")
             
             # Generate embedding
-            embedding = embedder.generate_embedding(section['content_markdown'])
+            embedding = embedder.embed_text(section['content_markdown'])
             print(f"  ✓ Generated embedding ({len(embedding)} dimensions)")
             
-            # Prepare data for Supabase
+            # Prepare data for Pinecone
             data = {
                 'section_url': section['section_url'],
                 'section_number': section.get('section_number'),
@@ -54,9 +54,9 @@ def main():
                 'embedding': embedding
             }
             
-            # Upsert to Supabase
+            # Upsert to Pinecone
             client.upsert_section(data)
-            print(f"  ✓ Indexed to Supabase")
+            print(f"  ✓ Indexed to Pinecone")
             
             success_count += 1
             

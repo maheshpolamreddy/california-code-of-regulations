@@ -1,34 +1,24 @@
-from vectordb.supabase_client import SupabaseVectorDB
-
-db = SupabaseVectorDB()
-print("Verifying DB Content...")
-
-count = db.count_sections()
-print(f"Count: {count}")
+from vectordb.pinecone_client import PineconeVectorDB
+import config
 
 try:
-    res = db.client.table("ccr_sections").select("section_url,embedding").limit(1).execute()
-    if res.data:
-        print(f"Record found: {res.data[0]['section_url']}")
-        emb = res.data[0]['embedding']
-        if emb:
-             print(f"Embedding length: {len(emb)}")
-        else:
-             print("Embedding is NULL/Empty!")
-    else:
-        print("No records found in table!")
-except Exception as e:
-    print(f"Select Failed: {e}")
+    db = PineconeVectorDB()
+    print("Verifying Pinecone DB Content...")
 
-try:
-    print("Testing RPC...")
-    # zeros vector
-    vec = [0.0] * 384
-    res = db.client.rpc("match_ccr_sections", {
-        "query_embedding": vec,
-        "match_threshold": -1.0,
-        "match_count": 5
-    }).execute()
-    print(f"RPC found: {len(res.data) if res.data else 0} items")
+    count = db.count_sections()
+    print(f"Count: {count}")
+
+    # Try listing indexes to verify general connection
+    indexes = db.client.list_indexes()
+    print(f"Indexes: {[idx.name for idx in indexes]}")
+
+    # Run a test query with a dummy zero vector
+    print("Testing similarity search query...")
+    vec = [0.0] * config.EMBEDDING_DIMENSION
+    res = db.search_similar(vec, limit=5, min_similarity=-1.0)
+    print(f"Query found: {len(res)} items")
+    if res:
+        print(f"Top citation: {res[0].get('citation')}")
+        print(f"Top URL: {res[0].get('url')}")
 except Exception as e:
-    print(f"RPC Failed: {e}")
+    print(f"Verification Failed: {e}")

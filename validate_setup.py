@@ -22,8 +22,7 @@ def check_env():
         pass  # .env not loaded; still check os.environ
     required = {
         "OPENAI_API_KEY": "Agent and embeddings (required for index + agent)",
-        "SUPABASE_URL": "Vector DB (required for index + agent)",
-        "SUPABASE_SERVICE_KEY": "Vector DB (required for index + agent)",
+        "PINECONE_API_KEY": "Vector DB (required for index + agent)",
     }
     optional = {
         "MAX_CONCURRENT_REQUESTS": "Crawling (default 3)",
@@ -34,7 +33,7 @@ def check_env():
     print("Environment:")
     for name, desc in required.items():
         val = os.getenv(name)
-        if val and val != "your_openai_api_key_here" and "your_supabase" not in (val or ""):
+        if val and val != "your_openai_api_key_here" and "your_pinecone" not in (val or ""):
             print(f"  [OK] {name} set")
         else:
             print(f"  [--] {name} missing or placeholder ({desc})")
@@ -55,7 +54,7 @@ def check_imports():
         ("tenacity", "retry"),
         ("pydantic", "BaseModel"),
         ("openai", "OpenAI"),
-        ("supabase", "create_client"),
+        ("pinecone", "Pinecone"),
     ]
     ok = True
     for module, attr in deps:
@@ -130,7 +129,7 @@ def main():
         print("Test crawl failed. Check network and Crawl4AI setup.")
         sys.exit(1)
     if not env_ok:
-        print("Set OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY in .env for index + agent.")
+        print("Set OPENAI_API_KEY, PINECONE_API_KEY in .env for index + agent.")
     print("Validation OK. Crawl: python run_pipeline.py  |  Agent: python cli.py (after index)")
     print("=" * 60)
 

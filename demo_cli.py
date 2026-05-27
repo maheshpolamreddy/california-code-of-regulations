@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from vectordb.embedder import TextEmbedder
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 from openai import OpenAI
 import config
 
@@ -26,8 +26,8 @@ def demo_agent(query: str):
     print(f"  ✓ Generated {len(query_embedding)}-dimensional vector\n")
     
     # Step 2: Search Supabase
-    print("Step 2: Searching Supabase for relevant sections...")
-    db = SupabaseVectorDB()
+    print("Step 2: Searching Pinecone for relevant sections...")
+    db = PineconeVectorDB()
     
     try:
         results = db.search_similar(query_embedding, limit=3)
@@ -50,12 +50,12 @@ def demo_agent(query: str):
             print("  ⚠️ No results found in database")
             print("     This likely means:")
             print("     - Database is empty (indexing may have failed)")
-            print("     - Connection issues with Supabase")
+            print("     - Connection issues with Pinecone")
             
     except Exception as e:
         print(f"  ❌ Error: {e}")
         print("     This likely means:")
-        print("     - Supabase credentials not configured")
+        print("     - Pinecone credentials not configured")
         print("     - Table doesn't exist yet")
         print("     - Network connection issue")
     

@@ -11,11 +11,13 @@ from pathlib import Path
 from functools import lru_cache
 from datetime import datetime, timedelta
 
+from typing import List, Dict, Optional
+
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
 from agent.compliance_advisor import ComplianceAdvisor
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 import config
 
 app = Flask(__name__)
@@ -30,11 +32,27 @@ def init_agent():
     global advisor, vectordb
     try:
         advisor = ComplianceAdvisor()
-        vectordb = SupabaseVectorDB()
+        vectordb = PineconeVectorDB()
+        # Verify connectivity
+        vectordb.client.list_indexes()
         return True
     except Exception as e:
-        print(f"Error initializing agent: {e}")
-        return False
+        print(f"Error initializing real agent (likely offline): {e}")
+        print("Falling back to local offline RAG mode...")
+        try:
+            from agent.offline_advisor import LocalOfflineAdvisor
+            
+            advisor = LocalOfflineAdvisor()
+            
+            class DummyVectorDB:
+                def count_sections(self):
+                    return len(advisor.sections)
+            vectordb = DummyVectorDB()
+            print("[OK] Local Offline RAG initialized successfully!")
+            return True
+        except Exception as ex:
+            print(f"Failed to initialize local offline RAG fallback: {ex}")
+            return False
 
 @app.route('/')
 def index():
@@ -172,18 +190,18 @@ if __name__ == '__main__':
     print("\nInitializing agent...")
     
     if init_agent():
-        print("✅ Agent initialized successfully!")
+        print("[OK] Agent initialized successfully!")
         print(f"\nEmbedding Model: {config.EMBEDDING_MODEL}")
         print(f"Agent Model: {config.AGENT_MODEL}")
         print(f"Embedding Dimension: {config.EMBEDDING_DIMENSION}")
         
         section_count = vectordb.count_sections() if vectordb else 0
-        print(f"\n📊 Indexed Sections: {section_count}")
+        print(f"\n[STATS] Indexed Sections: {section_count}")
         
         print("\n" + "=" * 70)
-        print("🚀 Starting web server...")
+        print("[START] Starting web server...")
         print("=" * 70)
-        print("\n📱 Open your browser to: http://localhost:5000")
+        print("\n[URL] Open your browser to: http://localhost:5000")
         print("\nPress CTRL+C to stop the server\n")
         
     if __import__("platform").system() == "Windows":

@@ -20,12 +20,12 @@ console = Console()
 def print_banner():
     """Print application banner."""
     banner = """
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║          CCR COMPLIANCE AGENT                                 ║
-║          California Code of Regulations Advisor               ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
++---------------------------------------------------------------+
+|                                                               |
+|          CCR COMPLIANCE AGENT                                 |
+|          California Code of Regulations Advisor               |
+|                                                               |
++---------------------------------------------------------------+
     """
     console.print(banner, style="bold blue")
     console.print("Ask questions about CCR regulations for your facility\n", style="dim")
@@ -41,12 +41,12 @@ def display_answer(result: dict):
     # Display citations
     if result.get('citations'):
         console.print("\n" + "="*70, style="bold")
-        console.print("\n📚 Citations & Source URLs:\n", style="bold cyan")
+        console.print("\nCitations & Source URLs:\n", style="bold cyan")
         
         for idx, citation in enumerate(result['citations'], 1):
             console.print(f"{idx}. {citation['citation']}", style="bold yellow")
             console.print(f"   {citation['heading']}", style="italic")
-            console.print(f"   🔗 {citation['url']}", style="blue underline")
+            console.print(f"   {citation['url']}", style="blue underline")
             console.print(f"   Relevance: {citation.get('similarity', 0):.2%}\n", style="dim")
     
     # Display metadata
@@ -56,16 +56,14 @@ def display_answer(result: dict):
         console.print(f"Detected facility type: {result['facility_type']}", style="dim")
     console.print()
 
-def interactive_mode():
+def interactive_mode(advisor):
     """Run in interactive conversational mode."""
     print_banner()
     
-    console.print("💡 Tips:", style="bold green")
+    console.print("Tips:", style="bold green")
     console.print("  - Be specific about your facility type (restaurant, theater, farm, etc.)")
     console.print("  - Ask about specific operations or requirements")
     console.print("  - Type 'quit' or 'exit' to end\n")
-    
-    advisor = ComplianceAdvisor()
     
     while True:
         try:
@@ -73,34 +71,32 @@ def interactive_mode():
             query = Prompt.ask("\n[bold green]Your Question[/bold green]")
             
             if query.lower() in ['quit', 'exit', 'q']:
-                console.print("\n👋 Goodbye! Stay compliant!\n", style="bold blue")
+                console.print("\nGoodbye! Stay compliant!\n", style="bold blue")
                 break
             
             if not query.strip():
                 continue
             
             # Process query
-            console.print("\n🔍 Searching CCR regulations...", style="italic")
+            console.print("\nSearching CCR regulations...", style="italic")
             result = advisor.answer_query(query)
             
             # Display result
             display_answer(result)
             
         except KeyboardInterrupt:
-            console.print("\n\n👋 Goodbye!\n", style="bold blue")
+            console.print("\n\nGoodbye!\n", style="bold blue")
             break
         except Exception as e:
-            console.print(f"\n❌ Error: {e}\n", style="bold red")
+            console.print(f"\nError: {e}\n", style="bold red")
 
-def single_query_mode(query: str, title: int = None):
+def single_query_mode(query, advisor, title: int = None):
     """Run single query mode."""
     print_banner()
     
     console.print(f"[bold]Query:[/bold] {query}\n")
     
-    advisor = ComplianceAdvisor()
-    
-    console.print("🔍 Searching CCR regulations...\n", style="italic")
+    console.print("Searching CCR regulations...\n", style="italic")
     result = advisor.answer_query(query, title_number=title)
     
     display_answer(result)
@@ -143,25 +139,41 @@ Examples:
     
     args = parser.parse_args()
     
-    # Check if Supabase is configured
-    if not config.SUPABASE_URL or not config.OPENAI_API_KEY:
-        console.print("\n❌ Error: Missing required environment variables\n", style="bold red")
-        console.print("Please configure .env file with:")
-        console.print("  - OPENAI_API_KEY")
-        console.print("  - SUPABASE_URL")
-        console.print("  - SUPABASE_SERVICE_KEY\n")
-        console.print(f"See .env.example for template\n", style="dim")
-        sys.exit(1)
-    
+    # Initialize advisor
+    advisor = None
+    try:
+        from agent.compliance_advisor import ComplianceAdvisor
+        from vectordb.pinecone_client import PineconeVectorDB
+        
+        # Verify required vars for online agent
+        if not config.PINECONE_API_KEY or (not config.GEMINI_API_KEY and not config.OPENAI_API_KEY):
+            raise ConnectionError("Missing environment variables for online mode")
+            
+        console.print("[dim]Checking database connection...[/dim]")
+        db = PineconeVectorDB()
+        db.client.list_indexes()
+        advisor = ComplianceAdvisor()
+        console.print("[bold green][OK] Connected to Pinecone (Real Advisor)[/bold green]\n")
+    except Exception as e:
+        console.print(f"[bold yellow][!] Real agent unavailable: {e}[/bold yellow]")
+        console.print("[bold yellow][!] Falling back to Local Offline RAG Mode...[/bold yellow]\n")
+        try:
+            from agent.offline_advisor import LocalOfflineAdvisor
+            advisor = LocalOfflineAdvisor()
+            console.print("[bold green][OK] Local Offline RAG initialized successfully![/bold green]\n")
+        except Exception as ex:
+            console.print(f"[bold red]Fatal error: Failed to initialize offline advisor fallback: {ex}[/bold red]\n")
+            sys.exit(1)
+            
     try:
         if args.query:
             # Single query mode
-            single_query_mode(args.query, args.title)
+            single_query_mode(args.query, advisor, args.title)
         else:
             # Interactive mode
-            interactive_mode()
+            interactive_mode(advisor)
     except Exception as e:
-        console.print(f"\n❌ Fatal error: {e}\n", style="bold red")
+        console.print(f"\nFatal error during execution: {e}\n", style="bold red")
         sys.exit(1)
 
 if __name__ == "__main__":

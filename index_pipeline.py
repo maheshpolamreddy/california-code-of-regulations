@@ -1,6 +1,6 @@
 """
 Index Pipeline
-Orchestrates the embedding and indexing of CCR sections into Supabase.
+Orchestrates the embedding and indexing of CCR sections into Pinecone.
 """
 
 import json
@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent))
 import config
 from logger import vectordb_logger
 from vectordb.embedder import TextEmbedder
-from vectordb.supabase_client import SupabaseVectorDB
+from vectordb.pinecone_client import PineconeVectorDB
 from models import CCRSection
 
 class IndexPipeline:
@@ -27,7 +27,7 @@ class IndexPipeline:
     
     def __init__(self):
         self.embedder = TextEmbedder()
-        self.vectordb = SupabaseVectorDB()
+        self.vectordb = PineconeVectorDB()
         self.batch_size = 10  # Process in batches for efficiency
         
     def load_extracted_sections(self) -> List[CCRSection]:
@@ -109,14 +109,14 @@ class IndexPipeline:
     
     def index_sections(self, sections: List[CCRSection]):
         """
-        Index all sections into Supabase.
+        Index all sections into Pinecone.
         Handles chunking, embedding, and batch uploads.
         """
         total_sections = len(sections)
         indexed_count = 0
         failed_count = 0
         
-        print(f"\nIndexing {total_sections} CCR sections into Supabase...")
+        print(f"\nIndexing {total_sections} CCR sections into Pinecone...")
         print(f"Batch size: {self.batch_size}\n")
         
         for i in tqdm(range(0, total_sections, self.batch_size), desc="Indexing batches"):
@@ -164,7 +164,7 @@ class IndexPipeline:
                         f.write(str(e))
                     failed_count += 1
             
-            # Batch upsert to Supabase
+            # Batch upsert to Pinecone
             if batch_records:
                 success_count = self.vectordb.upsert_batch(batch_records)
                 indexed_count += success_count

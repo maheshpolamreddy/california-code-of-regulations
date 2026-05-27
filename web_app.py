@@ -138,9 +138,28 @@ def query_agent():
                 'error': 'Agent not initialized. Please check server logs.'
             }), 500
         
+        # Extract advanced RAG parameters
+        title_number = data.get('title_number')
+        if title_number is not None:
+            try:
+                title_number = int(title_number)
+            except ValueError:
+                title_number = None
+                
+        min_similarity = data.get('min_similarity')
+        if min_similarity is not None:
+            try:
+                min_similarity = float(min_similarity)
+            except ValueError:
+                min_similarity = 0.5
+        else:
+            min_similarity = 0.5
+        
         # Run the query
         result = advisor.answer_query(
             query=query,
+            title_number=title_number,
+            min_similarity=min_similarity,
             include_context=True
         )
         
@@ -186,6 +205,35 @@ def health_check():
         'agent_ready': advisor is not None,
         'database_ready': vectordb is not None
     })
+
+@app.route('/api/logs')
+def get_logs():
+    """Read the last 30 lines of agent and database logs."""
+    try:
+        log_lines = []
+        # Try reading agent.log
+        agent_log_path = config.LOGS_DIR / 'agent.log'
+        if agent_log_path.exists():
+            with open(agent_log_path, 'r', encoding='utf-8') as f:
+                log_lines.extend(f.readlines()[-20:])
+        # Try reading vectordb.log
+        vectordb_log_path = config.LOGS_DIR / 'vectordb.log'
+        if vectordb_log_path.exists():
+            with open(vectordb_log_path, 'r', encoding='utf-8') as f:
+                log_lines.extend(f.readlines()[-20:])
+                
+        # Clean and sort lines chronologically
+        cleaned_lines = [line.strip() for line in log_lines if line.strip()]
+        cleaned_lines.sort()
+        return jsonify({
+            'success': True,
+            'logs': cleaned_lines[-30:]
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     print("=" * 70)

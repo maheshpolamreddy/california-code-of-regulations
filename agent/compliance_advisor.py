@@ -88,7 +88,8 @@ Your role is to help facility operators (e.g., restaurants, movie theaters, farm
         self,
         query: str,
         title_number: Optional[int] = None,
-        include_context: bool = False
+        include_context: bool = False,
+        min_similarity: float = 0.5
     ) -> Dict[str, any]:
         """
         Answer a compliance query using RAG.
@@ -97,6 +98,7 @@ Your role is to help facility operators (e.g., restaurants, movie theaters, farm
             query: User's question
             title_number: Optional CCR title filter
             include_context: Whether to include retrieved context in response
+            min_similarity: Minimum similarity threshold
             
         Returns:
             Dict with answer, citations, and metadata
@@ -112,7 +114,8 @@ Your role is to help facility operators (e.g., restaurants, movie theaters, farm
         sections = self.retriever.retrieve(
             query=query,
             title_number=title_number,
-            facility_type=facility_type
+            facility_type=facility_type,
+            min_similarity=min_similarity
         )
         
         if not sections:

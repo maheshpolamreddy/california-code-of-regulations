@@ -70,7 +70,7 @@ class LocalOfflineAdvisor:
                     return facility_type
         return None
         
-    def answer_query(self, query: str, title_number: Optional[int] = None, include_context: bool = False) -> Dict[str, any]:
+    def answer_query(self, query: str, title_number: Optional[int] = None, include_context: bool = False, min_similarity: float = 0.5) -> Dict[str, any]:
         # Filter by title first if provided
         filtered_sections = self.sections
         if title_number is not None:
@@ -112,7 +112,9 @@ class LocalOfflineAdvisor:
             results.append(sec_copy)
             
         results.sort(key=lambda x: x["similarity"], reverse=True)
-        top_results = results[:5]
+        top_results = [r for r in results[:5] if r.get("similarity", 0.5) >= min_similarity]
+        if not top_results:
+            top_results = results[:3] # fallback
         
         facility_type = self.extract_facility_type(query)
         

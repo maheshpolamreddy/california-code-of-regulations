@@ -28,7 +28,8 @@ class CCRRetriever:
         query: str,
         top_k: int = None,
         title_number: Optional[int] = None,
-        facility_type: Optional[str] = None
+        facility_type: Optional[str] = None,
+        min_similarity: float = 0.5
     ) -> List[Dict]:
         """
         Retrieve relevant CCR sections for a query.
@@ -38,6 +39,7 @@ class CCRRetriever:
             top_k: Number of results to return (default from config)
             title_number: Optional filter by CCR title number
             facility_type: Optional facility type for context (e.g., 'restaurant')
+            min_similarity: Minimum similarity threshold
             
         Returns:
             List of relevant sections with metadata and similarity scores
@@ -60,7 +62,7 @@ class CCRRetriever:
             query_embedding=query_embedding,
             limit=top_k * 2,  # Get more for re-ranking
             title_number=title_number,
-            min_similarity=0.5  # Minimum relevance threshold
+            min_similarity=min_similarity  # Minimum relevance threshold
         )
         
         # Flatten metadata fields for consistent access

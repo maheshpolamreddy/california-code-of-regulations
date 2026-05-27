@@ -23,16 +23,16 @@ Key: GEMINI_API_KEY
 Value: [Copy from your .env file below]
 ```
 
-#### Variable 2: SUPABASE_URL
+#### Variable 2: PINECONE_API_KEY
 ```
-Key: SUPABASE_URL
+Key: PINECONE_API_KEY
 Value: [Copy from your .env file below]
 ```
 
-#### Variable 3: SUPABASE_SERVICE_KEY
+#### Variable 3: PINECONE_INDEX_NAME
 ```
-Key: SUPABASE_SERVICE_KEY
-Value: [Copy from your .env file below]
+Key: PINECONE_INDEX_NAME
+Value: [Copy from your .env file below (e.g., ccr-sections)]
 ```
 
 #### Variable 4: OPENAI_API_KEY (Optional)
@@ -51,8 +51,8 @@ Value: [Copy from your .env file below]
 
 2. Find these lines and copy the values:
    - `GEMINI_API_KEY=...`
-   - `SUPABASE_URL=...`
-   - `SUPABASE_SERVICE_KEY=...`
+   - `PINECONE_API_KEY=...`
+   - `PINECONE_INDEX_NAME=...`
    - `OPENAI_API_KEY=...`
 
 ---
@@ -101,8 +101,8 @@ Render Dashboard
 
 - [ ] Go to Render Environment tab
 - [ ] Add GEMINI_API_KEY
-- [ ] Add SUPABASE_URL
-- [ ] Add SUPABASE_SERVICE_KEY
+- [ ] Add PINECONE_API_KEY
+- [ ] Add PINECONE_INDEX_NAME
 - [ ] (Optional) Add OPENAI_API_KEY
 - [ ] Click "Save Changes"
 - [ ] Wait for redeploy (2-3 min)

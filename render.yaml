@@ -10,9 +10,9 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      - key: SUPABASE_URL
+      - key: PINECONE_API_KEY
         sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: "ccr-sections"
       - key: PYTHON_VERSION
         value: "3.11.0"

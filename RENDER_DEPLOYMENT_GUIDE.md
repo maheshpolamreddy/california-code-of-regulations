@@ -44,7 +44,7 @@ Your code is pushed to GitHub. Render will automatically deploy. Here's what you
 
 **If you see errors:**
 - Check for "Out of memory" → Might need paid tier
-- Check for missing env vars → Verify Supabase keys are set
+- Check for missing env vars → Verify Pinecone keys are set
 
 ---
 
@@ -92,8 +92,8 @@ Once deployment shows **"Live"** status:
 
    ```
    GEMINI_API_KEY = your_gemini_key
-   SUPABASE_URL = your_supabase_url
-   SUPABASE_SERVICE_KEY = your_supabase_key
+   PINECONE_API_KEY = your_pinecone_key
+   PINECONE_INDEX_NAME = your_pinecone_index_name (e.g., ccr-sections)
    OPENAI_API_KEY = (optional, for fallback)
    ```
 
@@ -132,7 +132,7 @@ Once deployment shows **"Live"** status:
 **Check:**
 1. Render Logs → Look for specific error
 2. Environment tab → Verify all variables are set
-3. Most common: Missing `SUPABASE_URL` or `SUPABASE_SERVICE_KEY`
+3. Most common: Missing `PINECONE_API_KEY`
 
 ### Issue: Slow First Response
 
@@ -175,7 +175,7 @@ Your project is complete! You have:
 ✅ Crawling with Crawl4AI  
 ✅ 100% data extraction  
 ✅ Canonical data structure  
-✅ Vector database (Supabase)  
+✅ Vector database (Pinecone)  
 ✅ RAG agent with citations  
 ✅ Live deployment  
 ✅ Comprehensive documentation  

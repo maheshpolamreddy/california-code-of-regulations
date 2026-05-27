@@ -21,6 +21,7 @@
             --secondary: #bc13fe;    /* Electric Purple */
             --accent: #ff007f;       /* Cyber Pink */
             --success: #39ff14;      /* Neon Green */
+            --warning: #f59e0b;      /* Neon Amber/Yellow */
             --text-main: #f0f2f5;
             --text-muted: #8d92ad;
             --accent-glow: 0 0 20px rgba(0, 243, 255, 0.25);
@@ -1177,6 +1178,10 @@
                     badge.innerHTML = '<i class="fas fa-circle" style="color: var(--success); text-shadow: 0 0 10px var(--success);"></i> SYSTEM ONLINE';
                     badge.style.borderColor = "var(--success)";
                     badge.style.color = "var(--success)";
+                } else if (data.status === 'initializing') {
+                    badge.innerHTML = '<i class="fas fa-sync fa-spin" style="color: var(--warning); text-shadow: 0 0 10px var(--warning);"></i> ENGINE WARMING UP';
+                    badge.style.borderColor = "var(--warning)";
+                    badge.style.color = "var(--warning)";
                 } else {
                     badge.innerHTML = '<i class="fas fa-dot-circle" style="color: var(--accent);"></i> LOCAL OFFLINE MODE';
                     badge.style.borderColor = "var(--accent)";

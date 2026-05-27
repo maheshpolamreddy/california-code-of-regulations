@@ -1,12 +1,14 @@
 """
-CCR Compliance Agent - Web Interface
-Flask application for running the agent in a browser with enhanced features
+`web_app.py` - CCR Compliance Agent Web Server
+Implements a Flask web app with background loading of NLP models to ensure instant startup.
 """
 
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import sys
 import asyncio
+import threading
+import time
 from pathlib import Path
 from functools import lru_cache
 from datetime import datetime, timedelta
@@ -16,47 +18,75 @@ from typing import List, Dict, Optional
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
-from agent.compliance_advisor import ComplianceAdvisor
-from vectordb.pinecone_client import PineconeVectorDB
 import config
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for API access
+
 advisor = None
 vectordb = None
+is_initializing = False
+initialization_error = None
+
 stats_cache = {'data': None, 'timestamp': None}
 CACHE_DURATION = timedelta(seconds=30)
 
-def init_agent():
-    """Initialize the compliance advisor"""
-    global advisor, vectordb
+def init_agent_bg():
+    """Background thread function to initialize the compliance advisor and database client"""
+    global advisor, vectordb, is_initializing, initialization_error
+    if advisor is not None or is_initializing:
+        return
+        
+    is_initializing = True
+    print("[BG-START] Initializing models and vectors in the background...")
     try:
-        advisor = ComplianceAdvisor()
-        vectordb = PineconeVectorDB()
+        from agent.compliance_advisor import ComplianceAdvisor
+        from vectordb.pinecone_client import PineconeVectorDB
+        
+        adv = ComplianceAdvisor()
+        db = PineconeVectorDB()
+        
         # Verify connectivity
-        vectordb.client.list_indexes()
+        db.client.list_indexes()
+        
         # If database is connected but index is completely empty, 
         # fall back to local offline RAG to make the app immediately functional.
-        if vectordb.count_sections() == 0:
+        if db.count_sections() == 0:
             raise ConnectionError("Pinecone index is empty")
-        return True
+            
+        advisor = adv
+        vectordb = db
+        print("[BG-OK] Real agent initialized successfully in background!")
     except Exception as e:
-        print(f"Error initializing real agent (likely offline): {e}")
-        print("Falling back to local offline RAG mode...")
+        print(f"[BG-ERROR] Error initializing real agent: {e}")
+        print("[BG-FALLBACK] Falling back to local offline RAG mode...")
         try:
             from agent.offline_advisor import LocalOfflineAdvisor
             
-            advisor = LocalOfflineAdvisor()
+            adv = LocalOfflineAdvisor()
             
             class DummyVectorDB:
                 def count_sections(self):
-                    return len(advisor.sections)
-            vectordb = DummyVectorDB()
-            print("[OK] Local Offline RAG initialized successfully!")
-            return True
+                    return len(adv.sections)
+            db = DummyVectorDB()
+            
+            advisor = adv
+            vectordb = db
+            print("[BG-OK] Local Offline RAG fallback initialized successfully!")
         except Exception as ex:
-            print(f"Failed to initialize local offline RAG fallback: {ex}")
-            return False
+            initialization_error = str(ex)
+            print(f"[BG-FATAL] Failed to initialize local offline RAG fallback: {ex}")
+    finally:
+        is_initializing = False
+
+def start_background_initialization():
+    """Spawns a background thread to initialize the agent models and assets"""
+    thread = threading.Thread(target=init_agent_bg)
+    thread.daemon = True
+    thread.start()
+
+# Start background initialization immediately when the module is imported
+start_background_initialization()
 
 @app.route('/')
 def index():
@@ -73,25 +103,41 @@ def get_stats():
         if datetime.now() - stats_cache['timestamp'] < CACHE_DURATION:
             return jsonify(stats_cache['data'])
     
-    try:
-        # Safety check: ensure vectordb is initialized
-        if not vectordb:
+    # Check if system is still initializing
+    if not advisor:
+        if is_initializing:
             return jsonify({
-                'error': 'Database not initialized',
-                'status': 'offline',
                 'sections_indexed': 0,
                 'embedding_model': config.EMBEDDING_MODEL,
                 'agent_model': config.AGENT_MODEL,
-                'embedding_dimension': config.EMBEDDING_DIMENSION
-            }), 503
-            
+                'embedding_dimension': config.EMBEDDING_DIMENSION,
+                'status': 'initializing',
+                'timestamp': datetime.now().isoformat()
+            })
+        elif initialization_error:
+            return jsonify({
+                'error': initialization_error,
+                'status': 'error',
+                'sections_indexed': 0
+            }), 500
+        else:
+            return jsonify({
+                'sections_indexed': 0,
+                'embedding_model': config.EMBEDDING_MODEL,
+                'agent_model': config.AGENT_MODEL,
+                'embedding_dimension': config.EMBEDDING_DIMENSION,
+                'status': 'initializing',
+                'timestamp': datetime.now().isoformat()
+            })
+
+    try:
         section_count = vectordb.count_sections()
         stats_data = {
             'sections_indexed': section_count,
             'embedding_model': config.EMBEDDING_MODEL,
             'agent_model': config.AGENT_MODEL,
             'embedding_dimension': config.EMBEDDING_DIMENSION,
-            'status': 'online' if advisor else 'offline',
+            'status': 'online' if hasattr(vectordb, 'client') else 'offline',
             'timestamp': datetime.now().isoformat()
         }
         
@@ -109,6 +155,7 @@ def get_stats():
 @app.route('/api/query', methods=['POST'])
 def query_agent():
     """Handle agent queries with enhanced error handling."""
+    global advisor
     try:
         # Validate request
         if not request.json:
@@ -132,11 +179,22 @@ def query_agent():
                 'error': 'Query too long (max 1000 characters)'
             }), 400
         
+        # If the advisor is not yet ready, wait up to 15 seconds (for background initialization to finish)
+        wait_cycles = 0
+        while not advisor and is_initializing and wait_cycles < 30:
+            time.sleep(0.5)
+            wait_cycles += 1
+            
         if not advisor:
+            if initialization_error:
+                return jsonify({
+                    'success': False,
+                    'error': f'Agent initialization failed: {initialization_error}'
+                }), 500
             return jsonify({
                 'success': False,
-                'error': 'Agent not initialized. Please check server logs.'
-            }), 500
+                'error': 'Agent is warming up. Please wait 10 seconds and try again.'
+            }), 503
         
         # Extract advanced RAG parameters
         title_number = data.get('title_number')
@@ -203,7 +261,8 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'agent_ready': advisor is not None,
-        'database_ready': vectordb is not None
+        'database_ready': vectordb is not None,
+        'initializing': is_initializing
     })
 
 @app.route('/api/logs')
@@ -237,29 +296,19 @@ def get_logs():
 
 if __name__ == '__main__':
     print("=" * 70)
-    print("CCR COMPLIANCE AGENT - WEB INTERFACE")
+    print("CCR COMPLIANCE AGENT - WEB INTERFACE (BACKGROUND INITIALIZATION)")
     print("=" * 70)
-    print("\nInitializing agent...")
     
-    if init_agent():
-        print("[OK] Agent initialized successfully!")
-        print(f"\nEmbedding Model: {config.EMBEDDING_MODEL}")
-        print(f"Agent Model: {config.AGENT_MODEL}")
-        print(f"Embedding Dimension: {config.EMBEDDING_DIMENSION}")
-        
-        section_count = vectordb.count_sections() if vectordb else 0
-        print(f"\n[STATS] Indexed Sections: {section_count}")
-        
-        print("\n" + "=" * 70)
-        print("[START] Starting web server...")
-        print("=" * 70)
-        print("\n[URL] Open your browser to: http://localhost:5000")
-        print("\nPress CTRL+C to stop the server\n")
-        
+    # Wait a brief moment to let logs catch up in foreground mode
+    time.sleep(1)
+    
+    print("\n" + "=" * 70)
+    print("[START] Starting local development server...")
+    print("=" * 70)
+    print("\n[URL] Open your browser to: http://localhost:5000")
+    print("\nPress CTRL+C to stop the server\n")
+    
     if __import__("platform").system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-else:
-    # Production mode (Render, Gunicorn, etc.)
-    init_agent()
